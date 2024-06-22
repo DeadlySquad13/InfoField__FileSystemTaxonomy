@@ -1,0 +1,890 @@
+* filetags
+
+#+BEGIN_HTML
+<a href="https://karl-voit.at/demo-filetags-tagging">
+<img src="https://raw.githubusercontent.com/novoid/screencasts/master/file_management/filetags_tagging.gif" />
+</a>
+#+END_HTML
+
+[[file:bin/screencast.gif]]
+
+... filetags example demonstrating: controlled vocabulary file
+=~/.filetags=, tagging multiple files at once, removing tags by
+prepending a minus character, tagging using the proposed number
+shortcuts, tab completion of tags via =Tab=, and mutually exclusive
+tags (switching from =draft= to =final= without removing =draft=).
+
+This Python script adds or removes tags to file names in the following
+form:
+
+- "file without time stamp in name -​- *tag2*.txt"
+- "file name with several tags -​- *tag1 tag2*.jpeg"
+- "another example file name with multiple example tags -​- *fun* *videos* *kids*.mpeg"
+- "2013-05-09 a file name with ISO date stamp in name -​- *tag1*.jpg"
+- "2013-05-09T16.17 file name with time stamp -​- *tag3*.csv"
+
+The script accepts an arbitrary number of files (see your shell for
+possible length limitations).
+
+- *Target group*: users who are able to use command line tools and who
+  are using tags in file names.
+- Hosted on github: https://github.com/novoid/filetags
+- Note that [[https://en.wikipedia.org/wiki/Folder_(computing)#Folder_metaphor]["directories" are to "folders"]] what "files" are to
+  "documents".
+
+[[https://imgs.xkcd.com/comics/trained_a_neural_net.png]] (Source: [[https://xkcd.com/2173/][xkcd]])
+
+** Why
+
+Besides the fact that I am using [[https://en.wikipedia.org/wiki/Iso_date][ISO dates and times]] in file names
+(as shown in examples above), I am using tags with file names. To
+separate tags from the file name, I am using the separator
+"space dash dash space".
+
+For people familiar with [[https://en.wikipedia.org/wiki/Regex][Regular Expressions]]:
+
+: (<ISO date/time stamp>)?(?<descriptive file name>)?( -- <list of tags separated by spaces>)?.<file extension>
+
+Tagging files this way requires a file renaming process. Adding (or
+removing) tag(s) to a set of file results in multiple renaming
+processes. Despite advanced renaming tools like vidir (from
+[[http://joeyh.name/code/moreutils/][moreutils]]) it's handy to have a tool that makes adding and removing
+tags as simple as possible.
+
+You may like to add this tool to your image or file manager of
+choice. I added mine to [[http://geeqie.sourceforge.net/][geeqie]] which is my favorite image viewer on
+GNU/Linux.
+
+Here is [[https://glt18-programm.linuxtage.at/events/321.html][a 45 minute talk I gave]] at [[https://glt18.linuxtage.at/][Linuxtage Graz 2018]] presenting the
+idea of and workflows related to filetags and other handy tools for
+file management:
+
+[[https://media.ccc.de/v/GLT18_-_321_-_en_-_g_ap147_004_-_201804281550_-_the_advantages_of_file_name_conventions_and_tagging_-_karl_voit/][bin/2018-05-06 filetags demo slide for video preview with video button -- screenshots.png]]
+
+** Installation
+
+This tool needs [[http://www.python.org/downloads/][Python 3 to be installed]].
+
+You can install filetags either via [[https://packaging.python.org/tutorials/installing-packages/][pip]] which is the recommended way.
+Or you can install filetags using the source code, e.g., by cloning
+the [[https://github.com/novoid/filetags/][GitHub repository of filetags]].
+
+*** Installation Via Pip
+
+If you have installed Python 2 and Python 3 in parallel, make sure to
+use the correct pip version. You might need to use =pip3= instead of
+=pip=. If you only have Python 3 installed, you don't have to care ;-)
+
+On Microsoft Windows (only), you are going to need ~pip install
+pypiwin32~ as prerequisite. For easy Windows File Explorer
+integration, take a look at [[https://github.com/novoid/integratethis][integratethis]].
+
+Now install filetags via [[https://pip.pypa.io/en/stable/][pip]]: ~pip install filetags~
+
+You get updates by executing the very same pip command again.
+
+*** Installation Via Source Code
+
+If you use the GitHub sources (and not pip):
+
+- You need to install depending packages via: ~pip install -r requirements.txt~
+- The executable is ~filetags/__init__.py~. You might want to create a
+  symbolic link named "filetags" to that file.
+
+** Usage
+
+ # #+BEGIN_SRC sh :results output :wrap src
+ # ./filetags/__init__.py --help | sed 'sX/home/vkX\$HOMEX'
+ # #+END_SRC
+
+#+BEGIN_src
+usage: ./filetags/__init__.py [-h] [-t "STRING WITH TAGS"] [--remove] [-i]
+                              [-R] [-s] [--hardlinks] [-f]
+                              [--filebrowser PATH_TO_FILEBROWSER] [--tagtrees]
+                              [--tagtrees-handle-no-tag "treeroot" | "ignore" | "FOLDERNAME"]
+                              [--tagtrees-link-missing-mutual-tagged-items]
+                              [--tagtrees-dir <existing_directory>]
+                              [--tagtrees-depth TAGTREES_DEPTH] [--ln] [--la]
+                              [--lu] [--tag-gardening] [-v] [-q] [--version]
+                              [FILE [FILE ...]]
+
+This tool adds or removes simple tags to/from file names.
+
+Tags within file names are placed between the actual file name and
+the file extension, separated with " -- ". Multiple tags are
+separated with " ":
+  Update for the Boss -- projectA presentation.pptx
+  2013-05-16T15.31.42 Error message -- screenshot projectB.png
+
+This easy to use tag system has a drawback: for tagging a larger
+set of files with the same tag, you have to rename each file
+separately. With this tool, this only requires one step.
+
+Example usages:
+  filetags --tags="presentation projectA" *.pptx
+      … adds the tags "presentation" and "projectA" to all PPTX-files
+  filetags --tags="presentation -projectA" *.pptx
+      … adds the tag "presentation" to and removes tag "projectA" from all PPTX-files
+  filetags -i *
+      … ask for tag(s) and add them to all files in current folder
+  filetags -r draft *report*
+      … removes the tag "draft" from all files containing the word "report"
+
+This tools is looking for the optional first text file named ".filetags" in
+current and parent directories. Each of its lines is interpreted as a tag
+for tag completion. Multiple tags per line are considered mutual exclusive.
+
+Verbose description: http://Karl-Voit.at/managing-digital-photographs/
+
+positional arguments:
+  FILE                  One or more files to tag
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t "STRING WITH TAGS", --tags "STRING WITH TAGS"
+                        One or more tags (in quotes, separated by spaces) to
+                        add/remove
+  --remove              Remove tags from (instead of adding to) file name(s)
+  -i, --interactive     Interactive mode: ask for (a)dding or (r)emoving and
+                        name of tag(s)
+  -R, --recursive       Recursively go through the current directory and all
+                        of its subdirectories. Implemented for --tag-gardening
+                        and --tagtrees
+  -s, --dryrun          Enable dryrun mode: just simulate what would happen,
+                        do not modify files
+  --hardlinks           Use hard links instead of symbolic links. This is
+                        ignored on Windows systems. Note that renaming link
+                        originals when tagging does not work with hardlinks.
+  -f, --filter          Ask for list of tags and generate links in
+                        "$HOME/.filetags_tagfilter" containing links to all
+                        files with matching tags and start the filebrowser.
+                        Target directory can be overridden by --tagtrees-dir.
+  --filebrowser PATH_TO_FILEBROWSER
+                        Use this option to override the tool to view/manage
+                        files (for --filter; default: geeqie). Use "none" to
+                        omit the default one.
+  --tagtrees            This generates nested directories in
+                        "$HOME/.filetags_tagfilter" for each combination of
+                        tags up to a limit of 2. Target directory can be
+                        overridden by --tagtrees-dir. Please note that this
+                        may take long since it relates exponentially to the
+                        number of tags involved. Can be combined with
+                        --filter. See also http://Karl-Voit.at/tagstore/ and
+                        http://Karl-Voit.at/tagstore/downloads/Voit2012b.pdf
+  --tagtrees-handle-no-tag "treeroot" | "ignore" | "FOLDERNAME"
+                        When tagtrees are created, this parameter defines how
+                        to handle items that got no tag at all. The value
+                        "treeroot" is the default behavior: items without a
+                        tag are linked to the tagtrees root. The value
+                        "ignore" will not link any non-tagged items at all.
+                        Any other value is interpreted as a folder name within
+                        the tagreees which is used to link all non-tagged
+                        items to.
+  --tagtrees-link-missing-mutual-tagged-items
+                        When the controlled vocabulary holds mutual exclusive
+                        tags (multiple tags in one line) this option generates
+                        directories in the tagtrees root that hold links to
+                        items that have no single tag from those mutual
+                        exclusive sets. For example, when "draft final" is
+                        defined in the vocabulary, all items without "draft"
+                        and "final" are linked to the "no-draft-final"
+                        directory.
+  --tagtrees-dir <existing_directory>
+                        When tagtrees are created, this parameter overrides
+                        the default target directory
+                        "$HOME/.filetags_tagfilter" with a user-defined
+                        one. It has to be an empty directory or a non-existing
+                        directory which will be created. This also overrides
+                        the default directory for --filter.
+  --tagtrees-depth TAGTREES_DEPTH
+                        When tagtrees are created, this parameter defines the
+                        level of depth of the tagtree hierarchy. The default
+                        value is 2. Please note that increasing the depth
+                        increases the number of links exponentially.
+                        Especially when running Windows (using lnk-files
+                        instead of symbolic links) the performance is really
+                        slow. Choose wisely.
+  --ln, --list-tags-by-number
+                        List all file-tags sorted by their number of use
+  --la, --list-tags-by-alphabet
+                        List all file-tags sorted by their name
+  --lu, --list-tags-unknown-to-vocabulary
+                        List all file-tags which are found in file names but
+                        are not part of .filetags
+  --tag-gardening       This is for getting an overview on tags that might
+                        require to be renamed (typos, singular/plural, ...).
+                        See also http://www.webology.org/2008/v5n3/a58.html
+  -v, --verbose         Enable verbose mode
+  -q, --quiet           Enable quiet mode
+  --version             Display version and exit
+
+:copyright: (c) by Karl Voit <tools@Karl-Voit.at>
+:license: GPL v3 or any later version
+:URL: https://github.com/novoid/filetags
+:bugreports: via github or <tools@Karl-Voit.at>
+:version: 2018-08-02
+·
+#+END_src
+
+*** Examples:
+
+: filetags --tags foo a_file_name.txt
+... adds tag "foo" such that it results in ~a_file_name -- foo.txt~
+
+: filetags -i *.jpeg
+... interactive mode: asking for list of tags (for the JPEG files) from the user
+
+: filetags --tags "foo bar" "file name 1.jpg" "file name 2 -- foo.txt" "file name 3 -- bar.csv"
+... adds tag "foo" such that it results in ...
+: "file name 1 -- foo bar.jpg"
+: "file name 2 -- foo bar.txt"
+: "file name 3 -- bar foo.csv"
+
+: filetags --remove --tags foo "foo a_file_name -- foo.txt"
+... removes tag "foo" such that it results in ~foo a_file_name.txt~
+
+: filetags --tag-gardening
+... prints out a summary of tags in current and sub-folders used and
+tags that are most likely typos or abandoned
+
+For =--filter= and =--tagtrees= examples see sections below.
+
+Independent to tags you might define on the fly, the optional file
+.filetags stores a controlled vocabulary of recurrent tags; adjust
+this content to your needs.  In an interactive session, this set is
+available to tag any file in the folder .filetags resides (click tab
+key) and propagates into folders of lower hierachy.
+
+** Changelog
+
+- [[https://twitter.com/n0v0id/status/335043859404951554][2013-05-16]]: first version on GitHub
+- [[https://twitter.com/n0v0id/status/546449664179195904][2014-12-21]]: ~--list-tags-by-number~, ~--list-tags-by-alphabet~, and ~--tag-gardening~
+- [[https://twitter.com/n0v0id/status/551050830678605824][2015-01-02]]: tab completion for interactive tag input
+  - Example: entering =myt= + pressing =TAB= completes the entered
+    string to =mytag= if =mytag= is found in the vocabulary or
+    existing file tags
+- [[https://twitter.com/n0v0id/status/675388298735575041][2015-12-11]]: shortcut numbers for removing tags
+- [[https://twitter.com/n0v0id/status/685507528856367104][2016-01-08]]: shortcut numbers for top nine tags for adding tags
+  - Example: when filetags shows you =Top nine previously used tags in
+    this directory:= with =mytag(1) anothertag(2) oncemore(3)=, you
+    don't have to type in the tag names but use the numbers instead.
+    Combinations of numbers are fine as well.
+- [[https://twitter.com/n0v0id/status/767343476665159680][2016-08-21]]: mutually exclusive tags: see chapter below
+- [[https://twitter.com/n0v0id/status/768167397895180289][2016-08-23]]: installable via ~pip install filetags~
+- 2016-08-26: =--filter= option requires /all/ tags to be matching
+- 2016-10-15: added tag gardening: vocabulary tags not used + tags not
+  in vocabulary
+- 2016-10-16: interactively adding tags: omit already assigned tags in
+  shortcuts and vocabulary
+- 2016-11-27: added existing shared tags to visual tags
+- 2017-02-06: better help text for =--filter= option
+- 2017-02-25: shortcut tags can be mixed with non-shortcut tags
+  - Example: =mytag 49 anothertag= does add tags =mytag= and
+    =anothertag= and the shortcut tags =4= and =9=
+- 2017-04-09:
+  - interactively removing tags via =-tagname=:
+    - Example: the tag input =tagname -removeme= adds the tag
+      =tagname= and removes the tag =removeme= from the filename(s)
+  - try to find alternative filename if file not found
+    - Example: if you try to tag file =My file name.pdf= which is not
+      found, filetags tries to look for a different (unique and
+      existing) filename that shares the same start of the file name
+      such as =My file name -- mytag.pdf=. Very handy!
+    - This happens a lof when you are interactively adding multiple
+      tags one by one by simply re-executing the previous command
+      line: the file name changes in between because of the previous
+      tag(s) being added.
+- 2017-08-27: when tagging symbolic links whose source file has a
+  matching file name, the source file gets the same tags as the
+  symbolic link of it
+  - This is especially useful when using the =--filter= option
+- 2017-08-28:
+  - moved from optparse to [[https://docs.python.org/3/library/argparse.html][argparse]]
+  - removed option =--tag= (in favor to =--tags=)
+  - added option shortcut for recursive: =-R=
+  - renamed option =--imageviewer= to =--filebrowser= and enabled its functionality
+  - added new feature =--tagtrees=
+- 2017-08-31:
+  - improved screen output when renaming files
+- 2017-09-03:
+  - =--recursive= option now works for linking files to tagtrees as well
+  - corresponding =.filetags= files get linked to the output of tagtrees as well
+- 2017-11-11:
+  - removed command line options =-r=, =-d=, and =--delete=
+    - keeping =--remove= as the only option for removing tags
+    - removing tags was overrepresented in the command line options, blocking them to be used for other useful commands
+  - added =--tagtrees-handle-no-tag "treeroot" | "ignore" | "FOLDERNAME"=
+  - added =--tagtrees-link-missing-mutual-tagged-items=
+- 2017-12-30:
+  - added =--tagtrees-dir <existing_directory>=
+    - overriding the default target directory for the tagtrees result
+  - added =--tagtrees-depth TAGTREES_DEPTH=
+    - allowing to override the default depth of tagtrees
+    - use with care: especially on Windows a larger depth than 2 takes very long
+  - tagtrees now work with Windows using =lnk= files
+    - in contrast to symbolic links, that have rather poor performance
+      though: generation of tagtrees take way longer than on Linux or
+      macOS
+- 2018-01-30:
+  - fixed the pip3 package
+- 2018-03-18:
+  - added more detailed statistics on usage of tag groups when doing tag gardening
+  - added internal data structure =cache_of_files_with_metadata=
+- 2018-04-05:
+  - =--tagtrees-dir= can now be used for =--filter=
+  - much deeper support for Windows =.lnk= files:
+    - tagging lnk files within tagtrees also tag their original files
+    - .filetags files can now be .lnk files as well
+    - the unit tests now work on Windows and test some Windows specialities
+- 2018-04-18:
+  - comments in =.filetags= files that contain the controlled vocabulary
+- 2018-04-25:
+  - added hints to [[https://github.com/novoid/integratethis][=integratethis=]] to ease the Windows Explorer
+    integration
+- 2018-07-23: =--tagtrees== can now be filtered with =--filter=
+- 2018-08-02: added option =--hardlinks= as an alternative for non-Windows systems
+- 2019-12-22: added manual file globbing for Windows because of [[https://github.com/novoid/filetags/issues/25][#25]]
+- 2021-04-03: added support for =#donotsuggest= lines within =.filetags= files to omit tags from being proposed
+
+** Get the most out of filetags: controlled vocabulary ~.filetags~
+:PROPERTIES:
+:ID: 2018-07-08-cv
+:CREATED:  [2015-01-02 Fri 17:12]
+:END:
+
+This awesome tool is providing support for [[https://en.wikipedia.org/wiki/Controlled_vocabulary][controlled vocabularies]].
+When invoked for interactive tagging, it is looking for files named
+~.filetags~ in the current working directory and its parent
+directories as well. The first file of this name found is read in.
+Each line represents one tag. Those tags are used for *tag
+completion*.
+
+This is purely great: with tags within ~.filetags~ you don't have to
+enter the tags entrirely: just type the first characters and press =TAB=
+(twice to show you all possibilities). You will be amazed how
+efficiently you are going to tag things! :-)
+
+Of course, you can remove existing tags by prepending a =-= character
+to the tag: =-tagname=. This also works interactively using the tab
+completion feature.
+
+You can use comments in =.filetags= files: everything after a =#=
+character is considered a comment. You can even add a comment after a
+tag like "=mytag   # this is a test tag=".
+
+If you do use tags you do not want to get proposed for tagging, you
+can write them in lines like the following ones to omit their proposal
+(case insensitive):
+
+: #donotsuggest omit-this-tag dontshow
+: #donotsuggest wontpropose
+
+** Mutually exclusive tags
+:PROPERTIES:
+:ID:       2018-07-08-mutually-exclusive-tags
+:END:
+
+If you enter multiple tags in the same line in ~.filetags~, they are
+interpreted as *mutually exclusive tags*. For example, if your
+~.filetags~ contains the line ~winter spring summer autumn~, filetags
+replaces any season-tag with the new one. So if you tag the file …
+
+: example file -- summer anothertag.txt
+
+… with the tag ~winter~, it gets renamed to …
+
+: example file -- winter anothertag.txt
+
+… without having to manually remove the tag ~summer~.
+
+Common mutually exclusive tags are =draft final= or =confidential
+internal public=.
+
+** Filter
+:PROPERTIES:
+:CREATED:  [2018-08-01 Wed 11:44]
+:END:
+
+Consider you have a directory that contains hundreds of files.
+
+If you want to retrieve a file whose tags you know, you can skim
+through all the files. However, filetags offers you a more elegant
+possibility: you can filter the files according to one or more tags.
+
+For example, we take a look at following situation:
+
+: $HOME/my party/
+: |_ 2018-06-25 Party invitation -- scan correspondence.pdf
+: |_ 2018-07-31 Guest list -- correspondence.txt
+: |_ 2018-08-01T11.51.44 Uncle Bob arrives.jpg
+: |_ 2018-08-01T12.31.42 Sheila with her new boyfriend -- friends.jpg
+: |_ 2018-08-01T14.12.23 Start of BBQ with the big steak.jpg
+: |_ ...
+: |_ 2018-08-01T23.53.19 Even uncle Bob desides to go home -- fun.jpg
+: |_ 2018-08-05 Lessons learned for planning a party -- scan.pdf
+: |_ 2018-08-06 Thank-you letter Bob -- scan.pdf
+: |_ Bills/
+:   |_ 2018-07-30 Beverages by FreshYouUp -- scan taxes.pdf
+:   |_ 2018-08-03 Bill of the butcher -- scan taxes.pdf
+
+Following command and interaction would generate following temporal
+link structure:
+
+: filetags --filter
+
+User gets asked to enter one or more tags and she enters "scan". What
+now happens is that filetags creates a directory whose content
+consists of links to all matching files from your query. By default,
+the resulting directory is =.filetags_tagfilter= in your home
+directory. After invoking for our example, the content of this
+retrieval directory looks like that:
+
+: $HOME/.filetags_tagfilter/
+: |_ 2018-06-25 Party invitation -- scan correspondence.pdf
+: |_ 2018-08-05 Lessons learned for planning a party -- scan.pdf
+: |_ 2018-08-06 Thank-you letter Bob -- scan.pdf
+
+This way, our user is quickly able to skim through all scanned
+documents to locate the one desired to retrieve.
+
+To locate all matching files in all sub-directories as well, the user
+is able to add the parameter =--recursive= ...
+
+: filetags --filter --recursive
+
+... and chooses to enter the tag "scan" which would generate following
+temporal link structure:
+
+: $HOME/.filetags_tagfilter/
+: |_ 2018-06-25 Party invitation -- scan correspondence.pdf
+: |_ 2018-08-05 Lessons learned for planning a party -- scan.pdf
+: |_ 2018-08-06 Thank-you letter Bob -- scan.pdf
+: |_ 2018-07-30 Beverages by FreshYouUp -- scan taxes.pdf
+: |_ 2018-08-03 Bill of the butcher -- scan taxes.pdf
+
+** TagTrees
+:PROPERTIES:
+:ID:       2018-07-08-tagtrees
+:END:
+
+This functions is somewhat sophisticated as it is not a very
+well-known thing to have. If you're really interested in the whole
+story behind the visualization/navigation of tags using TagTrees, feel
+free to read [[http://Karl-Voit.at/tagstore/downloads/Voit2012b.pdf][my PhD thesis]] about it on [[http://Karl-Voit.at/tagstore/][the tagstore webpage]]. It is
+surely a piece of work I am proud of and the general chapters of it
+are written so that the average person is perfectly well able to
+follow.
+
+In short: this function takes the files of the current directory and
+generates hierarchies up to level of =$maxdepth= (by default 2, can be
+overridden via =--tagtrees-depth=) of all combinations of tags,
+[[https://en.wikipedia.org/wiki/Symbolic_link][linking]] all files according to their tags.
+
+Too complicated? Then let's explain it with some examples.
+
+Consider having a file like:
+
+: My new car -- car hardware expensive.jpg
+
+Now you generate the TagTrees, you'll find [[https://en.wikipedia.org/wiki/Symbolic_link][links]] to this file within
+sub-directories of =~/.filetags=, the default target directory: =car/=
+and =hardware/= and =expensive/= and =car/hardware/= and
+=car/expensive/= and =hardware/car/= and so on. You get the idea.
+
+The default target directory can be overridden via =--tagtrees-dir=.
+
+Therefore, within the folder =new/expensive/= you will find all files
+that have at least the tags "new" and "expensive" in any order. This
+is /really/ cool to have.
+
+Files of the current directory that don't have any tag at all, are
+linked directly to =~/.filetags= so that you can find and tag them
+easily.
+
+I personally, do use this feature within my image viewer of choice
+([[http://geeqie.sourceforge.net/][geeqie]]). I mapped it to =Alt-T= because =Alt-t= is occupied by
+=filetags= for tagging of course. So when I am within my image viewer
+and I press =Alt-T=, TagTrees of the currently shown images are
+created. Then an additional image viewer window opens up for me,
+showing the resulting TagTrees. This way, I can quickly navigate
+through the tag combinations to easily interactively filter according
+to tags.
+
+Please note: when you are tagging linked files within the TagTrees
+with filetags, only the current link gets updated with the new name.
+All other links to this modified filename within the other directories
+of the TagTrees gets broken. You have to re-create the TagTrees to
+update all the links after tagging files.
+
+The option =--tagtrees-handle-no-tag= controls how files with no tags
+should be handled. When set to =treeroot=, untagged files are linked
+in the TagTrees target directory directly. The option =ignore= does
+not link them at all. The option =FOLDERNAME= links them to a
+directory named accordingly to the value which is a sub-directory of
+the TagTrees target directory.
+
+With the option =--tagtrees-link-missing-mutual-tagged-items= you can
+control, whether or not there will be an additional TagTrees folder
+that contains all files which lack one of the mutually exclusive tags.
+Using the example ~winter spring summer autumn~ from above, all files
+that got none of those four tags get linked to a TagTrees directory
+named "no_winter_spring_summer_autumn". This way, you can easily find
+and tag files that don't participate in this set of mutually exclusive
+tags.
+
+Using the example files from above:
+
+: $HOME/my party/
+: |_ 2018-06-25 Party invitation -- scan correspondence.pdf
+: |_ 2018-07-31 Guest list -- correspondence.txt
+: |_ 2018-08-01T11.51.44 Uncle Bob arrives.jpg
+: |_ 2018-08-01T12.31.42 Sheila with her new boyfriend -- friends.jpg
+: |_ 2018-08-01T14.12.23 Start of BBQ with the big steak.jpg
+: |_ ...
+: |_ 2018-08-01T23.53.19 Even uncle Bob desides to go home -- fun.jpg
+: |_ 2018-08-05 Lessons learned for planning a party -- scan.pdf
+: |_ 2018-08-06 Thank-you letter Bob -- scan.pdf
+: |_ Bills/
+:   |_ 2018-07-30 Beverages by FreshYouUp -- scan taxes.pdf
+:   |_ 2018-08-03 Bill of the butcher -- scan taxes.pdf
+
+... and the command line ...
+
+: filetags --tagtrees --tagtrees-handle-no-tag "has_no_tag" --tagtrees-depth 2 --recursive
+
+... filetags generates the temporal link structure:
+
+: $HOME/.filetags_tagfilter/
+: |_ scan/
+:   |_ 2018-06-25 Party invitation -- scan correspondence.pdf
+:   |_ 2018-08-05 Lessons learned for planning a party -- scan.pdf
+:   |_ 2018-08-06 Thank-you letter Bob -- scan.pdf
+:   |_ 2018-07-30 Beverages by FreshYouUp -- scan taxes.pdf
+:   |_ 2018-08-03 Bill of the butcher -- scan taxes.pdf
+:   |_ correspondence/
+:     |_ 2018-06-25 Party invitation -- scan correspondence.pdf
+:   |_ taxes/
+:     |_ 2018-07-30 Beverages by FreshYouUp -- scan taxes.pdf
+:     |_ 2018-08-03 Bill of the butcher -- scan taxes.pdf
+: |_ correspondence/
+:   |_ 2018-06-25 Party invitation -- scan correspondence.pdf
+:   |_ 2018-07-31 Guest list -- correspondence.txt
+:   |_ scan/
+:     |_ 2018-06-25 Party invitation -- scan correspondence.pdf
+: |_ friends/
+:   |_ 2018-08-01T12.31.42 Sheila with her new boyfriend -- friends.jpg
+: |_ fun/
+:   |_ 2018-08-01T23.53.19 Even uncle Bob desides to go home -- fun.jpg
+: |_ taxes/
+:   |_ 2018-07-30 Beverages by FreshYouUp -- scan taxes.pdf
+:   |_ 2018-08-03 Bill of the butcher -- scan taxes.pdf
+:   |_ scan/
+:     |_ 2018-07-30 Beverages by FreshYouUp -- scan taxes.pdf
+:     |_ 2018-08-03 Bill of the butcher -- scan taxes.pdf
+: |_ has_no_tag/
+:   |_ 2018-08-01T11.51.44 Uncle Bob arrives.jpg
+:   |_ 2018-08-01T14.12.23 Start of BBQ with the big steak.jpg
+:   |_ ...
+
+This looks complicated because there are many links generated the user
+does not really need. The beauty of this solution is that the user is
+able to navigate to a file using a wide set of different paths (the
+TagTrees) and she is able to choose the one path that suits the
+current cognitive model.
+
+For example, she might want to retrieve "the one document from the
+last party which she remembers of having scanned and which she used
+for the invitation correspondence". With this mind-set, she most
+likely retrieves the document via
+=$HOME/.filetags_tagfilter/scan/correspondence/= or
+=$HOME/.filetags_tagfilter/correspondence/scan/= (does not matter
+which).
+
+The large number of other TagTrees can be ignored for this retrieval
+task.
+
+Another retrieval task example would be "all photos that do have no
+tag in order to continue tagging the photos". In this example, the
+user visits =$HOME/.filetags_tagfilter/has_no_tag/=, fires her image
+viewer (which has filetags integrated already - see below) and
+continues with the tagging activity. Since filetags synchronizes the
+tags within TagTrees linked files and the original files, the original
+files get renamed accordingly.
+
+** Bonus: Using tags to specify a sub-set of photographs
+:PROPERTIES:
+:ID:       2018-07-08-sel-photos
+:END:
+
+You know the problem: got back from Paris and you can not show 937
+image files to your friends. It's just too much.
+
+My solution: I tag to define selections. For example, I am using ~sel~
+("selection") for the ultimate cool photographs using ~filetags~, of
+course.
+
+Within geeqie, which is my preferred image viewer, I redefined ~F~ to
+call filetags with its =--filter= parameter. Now I get asked to enter
+one or more tags to filter the current folder. For presenting only the
+files that were tagged with ~sel~, I enter ~sel~ and confirm with
+~Enter~.
+
+This creates a temporary folder with symbolic links to all photographs
+of the current folder that contain the tag ~sel~ and it starts a new
+(additional) instance of geeqie.
+
+In short: after returning from a trip, I mark all "cool" photographs
+within geeqie, choose ~t~ and tag them with ~sel~ (described in
+previous section). For showing only ~sel~ images, I just press ~F~,
+enter ~sel~ and instead of 937 photographs, my friends just have to
+watch the best 50 or so. :-)
+
+Watch [[https://media.ccc.de/v/GLT18_-_321_-_en_-_g_ap147_004_-_201804281550_-_the_advantages_of_file_name_conventions_and_tagging_-_karl_voit][this 45 minute talk]] on how I am using this (and other) features.
+
+* Integration Into Common Tools
+
+If your system has Python 3 installed, you can start using filetags
+right away in any command line environment.
+
+However, users do want to integrate tools like filetags also in
+various GUI tools.
+
+The [[file:Integration.org][Integration.org file]] explains integration in some tools that allow
+external commands being added:
+
+- [[http://geeqie.sourceforge.net/][geeqie]], a GNU/Linux image viewer I am using
+- [[https://en.wikipedia.org/wiki/Thunar][Thunar]] is a popular GNU/Linux file browser for the xfce environment
+- [[https://gitlab.gnome.org/GNOME/nautilus][GNOME Nautilus]] file manager
+- Windows Explorer
+- [[http://freecommander.com/en/summary/][FreeCommander]], my recommendated alternative to Windows explorer
+- [[https://en.wikipedia.org/wiki/Dired][Dired]], the GNU/Emacs file manager
+
+If you have integrated filetags in additional commonly used tools,
+please send me a short how-to so that others are able to get the most
+out of filetags as well.
+
+* Related Tools and Workflows
+
+This tool is part of a tool-set which I use to manage my digital files
+such as photographs. My work-flows are described in [[http://karl-voit.at/managing-digital-photographs/][this blog posting]]
+you might like to read and in the video which is linked above.
+
+In short:
+
+For *tagging*, please refer to [[https://github.com/novoid/filetags][filetags]] and its documentation.
+
+See [[https://github.com/novoid/date2name][date2name]] for easily adding ISO *time-stamps or date-stamps* to
+files.
+
+For *easily naming and tagging* files within file browsers that allow
+integration of external tools, see [[https://github.com/novoid/appendfilename][appendfilename]] (once more) and
+[[https://github.com/novoid/filetags][filetags]].
+
+Moving to the archive folders is done using [[https://github.com/novoid/move2archive][move2archive]].
+
+Having tagged photographs gives you many advantages. For example, I
+automatically [[https://github.com/novoid/set_desktop_background_according_to_season][choose my *desktop background image* according to the
+current season]].
+
+Files containing an ISO time/date-stamp gets indexed by the
+filename-module of [[https://github.com/novoid/Memacs][Memacs]].
+
+-----------
+
+- Alternative implementations of the =filetags= concept:
+  - [[https://github.com/beutelma/filetags.el][GitHub - DerBeutlin/filetags.el: Emacs package to manage filetags in the filename]]
+  - With [[https://github.com/protesilaos/denote][denote]], Protesilaos
+    Stavrou implemented a conceptually related approach to manage notes
+    within an Emacs buffer.  With ~dired~, this method equally may be
+    applied on files, too.
+
+- A research platform for testing file-tagging on all platforms: [[https://karl-voit.at/tagstore/][tagstore]]
+  - This happens to be an important part of [[https://karl-voit.at/tagstore/downloads/Voit2012b.pdf][my PhD thesis]] in PIM.
+
+- Good resources for tagging software in general
+  - [[https://turbofuture.com/computers/Whats-the-Best-Software-for-Tagging-Files-A-Review][What's the Best Software for Tagging Files? | TurboFuture]]
+  - "Marktübersicht von Tagging-Werkzeugen und Vergleich mit tagstore" (German, 2013): linked on [[https://karl-voit.at/tagstore/en/papers.shtml][this page]] of the [[https://karl-voit.at/tagstore/][tagstore project]]
+
+- If you do like filetags but you prefer the syntax of [[https://www.tagspaces.org/][TagSpaces]] for
+  adding tags to file names, you should check out [[https://github.com/jgru/filetags][this filetags fork]].
+  Maintenance is limited though. Please notice that my other tools
+  working with tags do not support TagSpaces-style either.
+
+- https://forge.chapril.org/tykayn/rangement.git
+  - An NPM implementation of a subset of GuessFileName (using image exif header), append2name, move2archive
+  - You probably need to read a bit of French
+
+* How to Thank Me
+
+I'm glad you like my tools. If you want to support me:
+
+- Send old-fashioned *postcard* per snailmail - I love personal feedback!
+  - see [[http://tinyurl.com/j6w8hyo][my address]]
+- Send feature wishes or improvements as an issue on GitHub
+- Create issues on GitHub for bugs
+- Contribute merge requests for bug fixes
+- Check out my other cool [[https://github.com/novoid][projects on GitHub]]
+
+* Exhaustive List of All Features
+:PROPERTIES:
+:CREATED:  [2018-07-08 Sun 13:09]
+:END:
+
+This section is an exhaustive list of features of =filetags=. You
+might skip this when you're a first-time user in order *not* to get
+irritated for simple use-cases only.
+
+This section is particularily helpful for re-implementing =filetags=
+functionality and for power-users which are interested in the advanced
+functions provided by this tool.
+
+** General
+
+| *Before*                         | *When*             | *After*                          | *Note*                                     |
+|----------------------------------+--------------------+----------------------------------+--------------------------------------------|
+| =Some file name.jpeg=            | tagging with =foo= | =Some file name -- foo.jpeg=     | Tag separator is added automatically       |
+| =Some file name=                 | tagging with =foo= | =Some file name -- foo=          | There is no need for a file extension      |
+| =Some file name -- foo.jpeg=     | tagging with =bar= | =Some file name -- foo bar.jpeg= | =bar= becomes last tag                     |
+| =Some file name.jpeg.lnk=        | tagging with =bar= | =Some file name -- bar.jpeg.lnk= | The =.lnk= extension is taken into account |
+| =Some file name -- bar.jpeg=     | untagging =bar=    | =Some file name.jpeg=            | Tag separator is removed                   |
+| =Some file name -- foo bar.jpeg= | untagging =foo=    | =Some file name -- bar.jpeg=     | Tag order stays same when removing         |
+
+- =filetags= may be used
+  1. interactively (via =--interactive= or missing "action" command
+     line parameters) from command line or
+  2. in a script using command line parameters.
+- =filetags= offers a =--dryrun= option which does not modify any file
+  or directory.
+- Added tag(s) get appended as last tag(s).
+- When removing tags, their relative order is preserved.
+- When modifying any file that is a symbolic link or a Windows =.LNK=
+  file to a file that has the same basename (file name without path),
+  the linked/original file gets modified as well.
+  - This comes very handy when working within TagTrees (see below).
+  - However, when modifying links which do not share the same
+    base-name with its link source, the link might become a broken one
+    (depending on the link technology used).
+- When un-tagging tags from files that do not have those tags, it is silently ignored.
+- [ ] FIXXME: describe =find_unique_alternative_to_file(filename)= and implications
+
+- FUTURE: [[https://github.com/novoid/filetags/issues/13][support for tagging folders/directories · Issue #13 · novoid/filetags · GitHub]]
+- FUTURE: [[https://github.com/novoid/filetags/issues/14][Files within tagged directories do inherit the tags for all relevant features · Issue #14 · novoid/f…]]
+  - Inheritance applies to many features such as "don't tag a file
+    with a tag from any parent directory" and so forth.
+  - Not that simple to decide each use-case. This is a hard nut to
+    crack with many complex things to take care of.
+- FUTURE: [[https://github.com/novoid/filetags/issues/18][CV: add CLI option that prevents users from using tags that are not part of the used .filetags file …]]
+  - Enforcing CVs is a good practice IMHO.
+
+** Interactive Mode
+
+- Print used tags of selected file(s).
+  - For multiple files, show only the tags that are used within all
+    selected files.
+- =filetags= dialog shows up to nine topmost used tags (sorted by
+  number of usage) used for files within the current directory.
+  - E.g., =draft(1) projectX(2) customer(3) bill(4)=
+  - You can use =0-9= as shortcuts to select those tags.
+    - You can concatenate shortcut numbers without spaces in-between:
+      =143 foo= tags with the shortcuts number 1, 3 and 4 and adds new
+      tag =foo=.
+      - With the example above, it is equivalent to tagging with:
+        =draft bill customer foo= or =draft 4 3 foo=.
+- You can un-tag tags that appear in file name using the minus prefix.
+  - E.g., =-foo= un-tags the tag =foo=.
+  - Auto-completion is provided to un-tag existing tags.
+- Tags from the CV (within =.filetags= files) and from tags used in
+  the current directory can be auto-completed via =TAB=.
+  - Already used tags are not available for completion.
+- Multiple Files
+  - You can tag/un-tag multiple selected files at once.
+    - Selected files containing the tag(s) to tag are not modified and no tags get duplicated.
+    - Selected files not containing the tag(s) to un-tag are not modified.
+  - Tag suggestions for un-tagging contain the common tags of selected files.
+- Tagging dialog can be aborted any time via =Ctrl-c=.
+
+** Controlled Vocabulary (CV)
+
+Please read [[id:2018-07-08-cv][this]] first in order to understand CVs.
+
+- CV is read from =.filetags= files.
+  - One tag per line: simple tag
+  - Multiple tags per line, separated via spaces: a group of [[id:2018-07-08-mutually-exclusive-tags][mutually exclusive tags]]
+    - E.g., =draft final approved=
+      - When tagging =My report -- draft.txt= with =final=, =draft=
+        gets replaced by =final= without the user un-tagging it
+        before.
+      - =filetags= does not prevent user from manually tagging files
+        with two or more mutually exclusive tags.
+  - The order of priority to locate "matching" =.filetags= files is:
+    1. Current directory of the first file to tag/un-tag.
+    2. Any higher-level directory from the current directory of the first file to tag/un-tag.
+    3. =.filetags= file from the HOME directory.
+       - FUTURE: may be changed to: [[https://github.com/novoid/filetags/issues/16][Use "$HOME/.config/filetags" for overriding default options · Issue #16 · novoid/filetags · GitHub]]
+  - =.filetags= files may be links (hardlinks, symbolic links or even Windows =.LNK= files)
+- Comments within =.filetags= files begin with one or more =#= characters that may be prepended by one or more spaces.
+- You can omit (case insensitive) tags from being proposed (selectable
+  via shortcuts =0-9=) by adding special comment lines like:
+  : #donotsuggest omit-this-tag dontshow
+  : #donotsuggest wontpropose
+- PLANNED: =.filetags= files may include other =.filetags= files via =#include <relative or absolute path to another file>=
+  - [[https://github.com/novoid/filetags/issues/7][.filetags CV-file: include other files · Issue #7 · novoid/filetags · GitHub]]
+- FUTURE: [[https://github.com/novoid/filetags/issues/17][CV: .filetags may contain mandatory options · Issue #17 · novoid/filetags · GitHub]]
+  - Probably a nice to have for different default-behavior in different sub-hierarchies of the file system.
+
+** Filter
+
+This function is very handy for filtering groups of photographs within
+a large set of photographs as described [[id:2018-07-08-sel-photos][here]].
+
+- The user defines one or more tags whose files are linked to a target
+  directory.
+  - When more than one tag is given, only files that got tagged by all
+    given tags are linked.
+  - FUTURE: [[https://github.com/novoid/filetags/issues/10][CLI parameter to switch between: use symlink, hardlink, or copy · Issue #10 · novoid/filetags · GitH…]]
+    - This would allow for copying files instead of linking them.
+- Any "matching" =.filetags= file is linked to the target directory.
+- A populated target directory is never overwritten.
+- The default target directory is =.filetags_tagfilter= and might be
+  changed by =--tagtrees-dir=.
+- When started interactively, a file browser is opened showing the
+  target directory.
+  - The file browser tool might be overwritten with =--filebrowser=.
+- The =--recursive= option is taken into account accordingly.
+
+** Features Related to TagTrees
+
+[[id:2018-07-08-tagtrees][The TagTrees concept]] was developed by me during my PhD thesis ([[http://Karl-Voit.at/tagstore/downloads/Voit2012b.pdf][PDF]])
+when developing with the [[http://Karl-Voit.at/tagstore/][tagstore research platform]].
+
+Please note that in future, all functions related to TagTrees will be
+*moved into a separate tool* named =tagtrees=.
+
+- TagTrees are generated according to the tags found in tagged files.
+- The =--recursive= option is taken into account accordingly.
+- FUTURE: [[https://github.com/novoid/filetags/issues/21][Generate something like TagTrees but for ctime/mtime · Issue #21 · novoid/filetags · GitHub]]
+- FUTURE: [[https://github.com/novoid/filetags/issues/9][--filter options also works when generating tagtrees · Issue #9 · novoid/filetags · GitHub]]
+
+** Tag Gardening
+
+Just invoke =filetags --tag-gardening= or =filetags --recursive
+--tag-gardening= and read its output to learn about helpful analysis
+results to curate your tags. My personal favorites are:
+
+- I am able to find typos in tags (tag count is low and similar tags are found).
+- I can determine tags I seldom use and therefore might be removed from CVs.
+- Statistics on tag usage like, e.g.:
+  - Distribution of mutually exclusive tag options.
+  - Fraction of files that are not tagged.
+- Tags I have used which are not in my CVs.
+- Unused tags.
+
+This feature is really powerful when it comes to maintenance of your
+file tags or get some insight related to your tagging patterns.
+
+* Local Variables                                                  :noexport:
+# Local Variables:
+# mode: auto-fill
+# mode: flyspell
+# eval: (ispell-change-dictionary "en_US")
+# End:
