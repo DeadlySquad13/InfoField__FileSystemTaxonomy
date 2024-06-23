@@ -2782,6 +2782,3 @@ if __name__ == "__main__":
 
         logging.info("Received KeyboardInterrupt")
 
-# END OF FILE #################################################################
-
-# end
