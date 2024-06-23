@@ -384,8 +384,8 @@ packages:
 - kind: pypi
   name: black
   version: 24.3.0
-  url: https://files.pythonhosted.org/packages/d9/ed/704731afffe460b8ff0672623b40fce9fe569f2ee617c15857e4d4440a3a/black-24.3.0-cp312-cp312-macosx_11_0_arm64.whl
-  sha256: 4acf672def7eb1725f41f38bf6bf425c8237248bb0804faa3965c036f7672d11
+  url: https://files.pythonhosted.org/packages/71/9d/e5fa1ff4ef1940be15a64883c0bb8d2fcf626efec996eab4ae5a8c691d2c/black-24.3.0-cp312-cp312-win_amd64.whl
+  sha256: 56f52cfbd3dabe2798d76dbdd299faa046a901041faf2cf33288bc4e6dae57b5
   requires_dist:
   - click>=8.0.0
   - mypy-extensions>=0.4.3
@@ -404,8 +404,8 @@ packages:
 - kind: pypi
   name: black
   version: 24.3.0
-  url: https://files.pythonhosted.org/packages/b6/c6/1d174efa9ff02b22d0124c73fc5f4d4fb006d0d9a081aadc354d05754a13/black-24.3.0-cp312-cp312-macosx_10_9_x86_64.whl
-  sha256: 2818cf72dfd5d289e48f37ccfa08b460bf469e67fb7c4abb07edc2e9f16fb63f
+  url: https://files.pythonhosted.org/packages/d9/ed/704731afffe460b8ff0672623b40fce9fe569f2ee617c15857e4d4440a3a/black-24.3.0-cp312-cp312-macosx_11_0_arm64.whl
+  sha256: 4acf672def7eb1725f41f38bf6bf425c8237248bb0804faa3965c036f7672d11
   requires_dist:
   - click>=8.0.0
   - mypy-extensions>=0.4.3
@@ -444,8 +444,8 @@ packages:
 - kind: pypi
   name: black
   version: 24.3.0
-  url: https://files.pythonhosted.org/packages/71/9d/e5fa1ff4ef1940be15a64883c0bb8d2fcf626efec996eab4ae5a8c691d2c/black-24.3.0-cp312-cp312-win_amd64.whl
-  sha256: 56f52cfbd3dabe2798d76dbdd299faa046a901041faf2cf33288bc4e6dae57b5
+  url: https://files.pythonhosted.org/packages/b6/c6/1d174efa9ff02b22d0124c73fc5f4d4fb006d0d9a081aadc354d05754a13/black-24.3.0-cp312-cp312-macosx_10_9_x86_64.whl
+  sha256: 2818cf72dfd5d289e48f37ccfa08b460bf469e67fb7c4abb07edc2e9f16fb63f
   requires_dist:
   - click>=8.0.0
   - mypy-extensions>=0.4.3
@@ -602,16 +602,16 @@ packages:
 - kind: pypi
   name: coverage
   version: 7.4.4
-  url: https://files.pythonhosted.org/packages/88/92/07f9c593cd27e3c595b8cb83b95adad8c9ba3d611debceed097a5fd6be4b/coverage-7.4.4-cp312-cp312-macosx_11_0_arm64.whl
-  sha256: 41c9c5f3de16b903b610d09650e5e27adbfa7f500302718c9ffd1c12cf9d6818
+  url: https://files.pythonhosted.org/packages/46/c4/1dfe76d96034a347d717a2392b004d42d45934cb94efa362ad41ca871f6e/coverage-7.4.4-cp312-cp312-win_amd64.whl
+  sha256: d71eec7d83298f1af3326ce0ff1d0ea83c7cb98f72b577097f9083b20bdaf05e
   requires_dist:
   - tomli ; python_full_version <= '3.11.0a6' and extra == 'toml'
   requires_python: '>=3.8'
 - kind: pypi
   name: coverage
   version: 7.4.4
-  url: https://files.pythonhosted.org/packages/a0/de/a54b245e781bfd6f3fd7ce5566a695686b5c25ee7c743f514e7634428972/coverage-7.4.4-cp312-cp312-macosx_10_9_x86_64.whl
-  sha256: 201bef2eea65e0e9c56343115ba3814e896afe6d36ffd37bab783261db430f76
+  url: https://files.pythonhosted.org/packages/88/92/07f9c593cd27e3c595b8cb83b95adad8c9ba3d611debceed097a5fd6be4b/coverage-7.4.4-cp312-cp312-macosx_11_0_arm64.whl
+  sha256: 41c9c5f3de16b903b610d09650e5e27adbfa7f500302718c9ffd1c12cf9d6818
   requires_dist:
   - tomli ; python_full_version <= '3.11.0a6' and extra == 'toml'
   requires_python: '>=3.8'
@@ -626,8 +626,8 @@ packages:
 - kind: pypi
   name: coverage
   version: 7.4.4
-  url: https://files.pythonhosted.org/packages/46/c4/1dfe76d96034a347d717a2392b004d42d45934cb94efa362ad41ca871f6e/coverage-7.4.4-cp312-cp312-win_amd64.whl
-  sha256: d71eec7d83298f1af3326ce0ff1d0ea83c7cb98f72b577097f9083b20bdaf05e
+  url: https://files.pythonhosted.org/packages/a0/de/a54b245e781bfd6f3fd7ce5566a695686b5c25ee7c743f514e7634428972/coverage-7.4.4-cp312-cp312-macosx_10_9_x86_64.whl
+  sha256: 201bef2eea65e0e9c56343115ba3814e896afe6d36ffd37bab783261db430f76
   requires_dist:
   - tomli ; python_full_version <= '3.11.0a6' and extra == 'toml'
   requires_python: '>=3.8'
@@ -1054,8 +1054,8 @@ packages:
 - kind: pypi
   name: mypy
   version: 1.9.0
-  url: https://files.pythonhosted.org/packages/d7/d2/072e40384b53051106b4fcf03537fb88e2a6ad0757d2ab7f6c8c2f188a69/mypy-1.9.0-cp312-cp312-macosx_11_0_arm64.whl
-  sha256: 0235391f1c6f6ce487b23b9dbd1327b4ec33bb93934aa986efe8a9563d9349e6
+  url: https://files.pythonhosted.org/packages/72/1f/8b214b69d08cc5e4bd8c3769ac55a43318f3529362ea55e5957774b69924/mypy-1.9.0-cp312-cp312-win_amd64.whl
+  sha256: fe28657de3bfec596bbeef01cb219833ad9d38dd5393fc649f4b366840baefe6
   requires_dist:
   - typing-extensions>=4.1.0
   - mypy-extensions>=1.0.0
@@ -1068,8 +1068,8 @@ packages:
 - kind: pypi
   name: mypy
   version: 1.9.0
-  url: https://files.pythonhosted.org/packages/6e/96/40f0f605b1d4e2ad1fb11d21988ce3a3e205886c0fcbd35c9789a214de9a/mypy-1.9.0-cp312-cp312-macosx_10_9_x86_64.whl
-  sha256: aceb1db093b04db5cd390821464504111b8ec3e351eb85afd1433490163d60cd
+  url: https://files.pythonhosted.org/packages/d7/d2/072e40384b53051106b4fcf03537fb88e2a6ad0757d2ab7f6c8c2f188a69/mypy-1.9.0-cp312-cp312-macosx_11_0_arm64.whl
+  sha256: 0235391f1c6f6ce487b23b9dbd1327b4ec33bb93934aa986efe8a9563d9349e6
   requires_dist:
   - typing-extensions>=4.1.0
   - mypy-extensions>=1.0.0
@@ -1096,8 +1096,8 @@ packages:
 - kind: pypi
   name: mypy
   version: 1.9.0
-  url: https://files.pythonhosted.org/packages/72/1f/8b214b69d08cc5e4bd8c3769ac55a43318f3529362ea55e5957774b69924/mypy-1.9.0-cp312-cp312-win_amd64.whl
-  sha256: fe28657de3bfec596bbeef01cb219833ad9d38dd5393fc649f4b366840baefe6
+  url: https://files.pythonhosted.org/packages/6e/96/40f0f605b1d4e2ad1fb11d21988ce3a3e205886c0fcbd35c9789a214de9a/mypy-1.9.0-cp312-cp312-macosx_10_9_x86_64.whl
+  sha256: aceb1db093b04db5cd390821464504111b8ec3e351eb85afd1433490163d60cd
   requires_dist:
   - typing-extensions>=4.1.0
   - mypy-extensions>=1.0.0
@@ -1460,14 +1460,14 @@ packages:
 - kind: pypi
   name: pyyaml
   version: 6.0.1
-  url: https://files.pythonhosted.org/packages/84/02/404de95ced348b73dd84f70e15a41843d817ff8c1744516bf78358f2ffd2/PyYAML-6.0.1-cp312-cp312-macosx_11_0_arm64.whl
-  sha256: 40df9b996c2b73138957fe23a16a4f0ba614f4c0efce1e9406a184b6d07fa3a9
+  url: https://files.pythonhosted.org/packages/2b/9f/fbade56564ad486809c27b322d0f7e6a89c01f6b4fe208402e90d4443a99/PyYAML-6.0.1-cp312-cp312-win_amd64.whl
+  sha256: 0d3304d8c0adc42be59c5f8a4d9e3d7379e6955ad754aa9d6ab7a398b59dd1df
   requires_python: '>=3.6'
 - kind: pypi
   name: pyyaml
   version: 6.0.1
-  url: https://files.pythonhosted.org/packages/bc/06/1b305bf6aa704343be85444c9d011f626c763abb40c0edc1cad13bfd7f86/PyYAML-6.0.1-cp312-cp312-macosx_10_9_x86_64.whl
-  sha256: 855fb52b0dc35af121542a76b9a84f8d1cd886ea97c84703eaa6d88e37a2ad28
+  url: https://files.pythonhosted.org/packages/84/02/404de95ced348b73dd84f70e15a41843d817ff8c1744516bf78358f2ffd2/PyYAML-6.0.1-cp312-cp312-macosx_11_0_arm64.whl
+  sha256: 40df9b996c2b73138957fe23a16a4f0ba614f4c0efce1e9406a184b6d07fa3a9
   requires_python: '>=3.6'
 - kind: pypi
   name: pyyaml
@@ -1478,8 +1478,8 @@ packages:
 - kind: pypi
   name: pyyaml
   version: 6.0.1
-  url: https://files.pythonhosted.org/packages/2b/9f/fbade56564ad486809c27b322d0f7e6a89c01f6b4fe208402e90d4443a99/PyYAML-6.0.1-cp312-cp312-win_amd64.whl
-  sha256: 0d3304d8c0adc42be59c5f8a4d9e3d7379e6955ad754aa9d6ab7a398b59dd1df
+  url: https://files.pythonhosted.org/packages/bc/06/1b305bf6aa704343be85444c9d011f626c763abb40c0edc1cad13bfd7f86/PyYAML-6.0.1-cp312-cp312-macosx_10_9_x86_64.whl
+  sha256: 855fb52b0dc35af121542a76b9a84f8d1cd886ea97c84703eaa6d88e37a2ad28
   requires_python: '>=3.6'
 - kind: conda
   name: readline
