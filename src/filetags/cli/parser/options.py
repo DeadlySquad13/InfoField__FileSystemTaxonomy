@@ -1,111 +1,12 @@
-import os
-import sys
 import argparse
+import sys
 
-from filetags.consts import (BETWEEN_TAG_SEPARATOR, DEFAULT_IMAGE_VIEWER_LINUX,
-                             DEFAULT_TAGTREES_MAXDEPTH, FILENAME_TAG_SEPARATOR,
-                             TAGFILTER_DIRECTORY, PROG_VERSION_DATE, IS_WINDOWS)
-# # Help
+from filetags.cli.help_parts import DESCRIPTION, EPILOG
+from filetags.consts import DEFAULT_IMAGE_VIEWER_LINUX, DEFAULT_TAGTREES_MAXDEPTH, TAGFILTER_DIRECTORY
 
-if IS_WINDOWS:
-    try:
-        import win32com.client
-    except ImportError:
-        print(
-            'Could not find Python module "win32com.client".\nPlease install it, e.g., '
-            + 'with "sudo pip install pypiwin32".'
-        )
-        sys.exit(3)
-    import pathlib
-
-TTY_HEIGHT: int
-TTY_WIDTH: int
-
-# Determining the window size of the terminal:
-if IS_WINDOWS:
-    TTY_HEIGHT, TTY_WIDTH = 80, 80  # fall-back values
-else:
-    # check to avoid stty error when stdin is not a terminal.
-    if sys.stdin.isatty():
-        try:
-            TTY_HEIGHT, TTY_WIDTH = [
-                int(x) for x in os.popen("stty size", "r").read().split()
-            ]
-        except ValueError:
-            TTY_HEIGHT, TTY_WIDTH = 80, 80  # fall-back values
-    else:
-        TTY_HEIGHT, TTY_WIDTH = 80, 80
-
-max_file_length = 0  # will be set after iterating over source files182
-
-UNIQUE_TAG_TESTSTRINGS = ["teststring1", "teststring2"]
-unique_tags = [
-    UNIQUE_TAG_TESTSTRINGS
-]  # list of list which contains tags that are mutually exclusive
-# Note: u'teststring1' and u'teststring2' are hard-coded for testing purposes.
-#       You might delete them if you don't use my unit test suite.
-
-# those tags are omitted from being suggested when they are mentioned in .filetags #donotsuggest lines (case insensitive)
-# example line:  "#donotsuggest foo bar" -> "foo" and "bar" are never suggested
-DONOTSUGGEST_PREFIX = "#donotsuggest "
-do_not_suggest_tags = []  # list of lower-case strings
-
-DESCRIPTION = (
-    'This tool adds or removes simple tags to/from file names.\n\
-\n\
-Tags within file names are placed between the actual file name and\n\
-the file extension, separated with "'
-    + FILENAME_TAG_SEPARATOR
-    + '". Multiple tags are\n\
-separated with "'
-    + BETWEEN_TAG_SEPARATOR
-    + '":\n\
-  Update for the Boss'
-    + FILENAME_TAG_SEPARATOR
-    + "projectA"
-    + BETWEEN_TAG_SEPARATOR
-    + "presentation.pptx\n\
-  2013-05-16T15.31.42 Error message"
-    + FILENAME_TAG_SEPARATOR
-    + "screenshot"
-    + BETWEEN_TAG_SEPARATOR
-    + 'projectB.png\n\
-\n\
-This easy to use tag system has a drawback: for tagging a larger\n\
-set of files with the same tag, you have to rename each file\n\
-separately. With this tool, this only requires one step.\n\
-\n\
-Example usages:\n\
-  filetags --tags="presentation projectA" *.pptx\n\
-      … adds the tags "presentation" and "projectA" to all PPTX-files\n\
-  filetags --tags="presentation -projectA" *.pptx\n\
-      … adds the tag "presentation" to and removes tag "projectA" from all PPTX-files\n\
-  filetags -i *\n\
-      … ask for tag(s) and add them to all files in current folder\n\
-  filetags -r draft *report*\n\
-      … removes the tag "draft" from all files containing the word "report"\n\
-\n\
-\n\
-This tools is looking for the optional first text file named ".filetags" in\n\
-current and parent directories. Each of its lines is interpreted as a tag\n\
-for tag completion. Multiple tags per line are considered mutual exclusive.\n\
-\n\
-Verbose description: http://Karl-Voit.at/managing-digital-photographs/'
-)
-
-EPILOG = (
-    "\n\
-:copyright: (c) by Karl Voit <tools@Karl-Voit.at>\n\
-:license: GPL v3 or any later version\n\
-:URL: https://github.com/novoid/filetags\n\
-:bugreports: via github or <tools@Karl-Voit.at>\n\
-:version: "
-    + PROG_VERSION_DATE
-    + "\n·\n"
-)
+CliOptions = argparse.Namespace
 
 
-# # Parser
 def get_cli_options():
     parser = argparse.ArgumentParser(
         prog=sys.argv[0],

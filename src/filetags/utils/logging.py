@@ -1,19 +1,15 @@
 import sys
 import logging
 
-from filetags.cli import get_cli_options
 
-# TODO: Can we call this function multiple times?
-options = get_cli_options()
-
-
-def handle_logging():
+# TODO: Type cli_options
+def handle_logging(cli_options):
     """Log handling and configuration"""
 
-    if options.verbose:
+    if cli_options.verbose:
         FORMAT = "%(levelname)-8s %(asctime)-15s %(message)s"
         logging.basicConfig(level=logging.DEBUG, format=FORMAT)
-    elif options.quiet:
+    elif cli_options.quiet:
         FORMAT = "%(levelname)-8s %(message)s"
         logging.basicConfig(level=logging.ERROR, format=FORMAT)
     else:

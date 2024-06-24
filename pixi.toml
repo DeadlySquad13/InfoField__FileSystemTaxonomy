@@ -57,5 +57,8 @@ pypi-dependencies = { MlOps_course__Tasks = { path = "./", editable = true }, pr
 [environments]
 default = []
 dev = ["test", "lint", "pre-commit"]
+
+[target.win-64.pypi-dependencies]
+pypiwin32 = "*"
 # quarto = ["quarto", "jupyter",]
 # dev-quarto = ["test", "lint", "quarto", "jupyter", "pre-commit"]

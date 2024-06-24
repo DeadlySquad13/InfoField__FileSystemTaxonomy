@@ -1,4 +1,5 @@
 import os
+import re
 import platform
 
 
@@ -17,3 +18,19 @@ DEFAULT_TAGTREES_MAXDEPTH = 2
 DEFAULT_IMAGE_VIEWER_LINUX = "geeqie"
 DEFAULT_IMAGE_VIEWER_WINDOWS = "explorer"
 TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS = True
+
+
+# file names containing tags matches following regular expression
+FILE_WITH_TAGS_REGEX = re.compile(
+    r"(.+?)" + FILENAME_TAG_SEPARATOR + r"(.+?)(\.(\w+))??$"
+)
+FILE_WITH_TAGS_REGEX_FILENAME_INDEX = 1  # component.group(1)
+FILE_WITH_TAGS_REGEX_TAGLIST_INDEX = 2
+FILE_WITH_TAGS_REGEX_EXTENSION_INDEX = 4
+
+FILE_WITH_EXTENSION_REGEX = re.compile(r"(.*)\.(.*)$")
+FILE_WITH_EXTENSION_REGEX_FILENAME_INDEX = 1
+FILE_WITH_EXTENSION_REGEX_EXTENSION_INDEX = 2
+
+
+YYYY_MM_DD_PATTERN = re.compile(r"^(\d{4,4})-([01]\d)-([0123]\d)[- _T]")
