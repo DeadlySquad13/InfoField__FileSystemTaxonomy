@@ -2,7 +2,7 @@ import os
 
 from filetags.cli import UNIQUE_TAG_TESTSTRINGS, CliOptions
 from filetags.file_operations import get_files_with_metadata
-from filetags.Tags import (find_similar_tags,
+from filetags.tags import (find_similar_tags,
                            get_tags_from_files_and_subfolders, print_tag_dict,
                            print_tag_set)
 
@@ -25,7 +25,7 @@ def handle_tag_gardening(vocabulary, cache_of_files_with_metadata={}, options: C
         cache_of_files_with_metadata=cache_of_files_with_metadata,
         options=options,
     )  # = cache_of_files_with_metadata of current dir
-    tag_dict = get_tags_from_files_and_subfolders(startdir=os.getcwd())
+    tag_dict = get_tags_from_files_and_subfolders(startdir=os.getcwd(), options=options)
     if not tag_dict:
         print("\nNo file containing tags found in this folder hierarchy.\n")
         return

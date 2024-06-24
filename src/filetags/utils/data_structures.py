@@ -20,7 +20,7 @@ def item_contained_in_list_of_lists(item, list_of_lists):
 
 
 # REFACTOR: one part to the cli, transition detection part stay leave here.
-def print_item_transition(path, source, destination, transition):
+def print_item_transition(path, source, destination, transition, max_file_length):
     """
     Returns true if item is member of at least one list in list_of_lists.
 

@@ -10,7 +10,7 @@ from filetags.file_operations import (
     assert_empty_tagfilter_directory, create_link, get_files_of_directory,
     locate_file_in_cwd_and_parent_directories, split_up_filename)
 from filetags.integrations import start_filebrowser
-from filetags.Tags import (extract_tags_from_filename,
+from filetags.tags import (extract_tags_from_filename,
                            filter_files_matching_tags,
                            get_tags_from_files_and_subfolders)
 from filetags.utils.logging import error_exit
@@ -190,7 +190,7 @@ def generate_tagtrees(
         + "(exponentially with respect to number of tags)"
     )
 
-    tags = get_tags_from_files_and_subfolders(startdir=os.getcwd(), use_cache=True)
+    tags = get_tags_from_files_and_subfolders(startdir=os.getcwd(), use_cache=True, options=options)
 
     # Here, we define a small helper function within a function. Cool,
     # heh? Bet many folks are not aware of those nifty things I know of ;-P

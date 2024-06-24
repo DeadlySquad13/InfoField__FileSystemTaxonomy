@@ -1,16 +1,16 @@
 import logging
 import os
 import pathlib
-import platform
 import sys
 
 from filetags.cli import TTY_HEIGHT, TTY_WIDTH, ask_for_tags
 from filetags.cli.parser import (extract_filenames_from_argument,
-                                 extract_tags_from_argument)
+                                 extract_tags_from_argument, validate_options)
 from filetags.cli.preprocessing import (
     get_upto_nine_keys_of_dict_with_highest_value,
     locate_and_parse_controlled_vocabulary)
-from filetags.consts import (BETWEEN_TAG_SEPARATOR, PROG_VERSION_DATE,
+from filetags.consts import (BETWEEN_TAG_SEPARATOR, IS_WINDOWS,
+                             PROG_VERSION_DATE,
                              TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS,
                              TAGFILTER_DIRECTORY)
 from filetags.file_operations import (all_files_are_links_to_same_directory,
@@ -21,7 +21,7 @@ from filetags.file_operations import (all_files_are_links_to_same_directory,
                                       is_broken_link, is_nonbroken_link,
                                       split_up_filename)
 from filetags.tag_gardening import handle_tag_gardening
-from filetags.Tags import (add_tag_to_countdict, extract_tags_from_filename,
+from filetags.tags import (add_tag_to_countdict, extract_tags_from_filename,
                            filter_files_matching_tags,
                            get_tags_from_files_and_subfolders,
                            list_unknown_tags, print_tag_dict)
@@ -68,6 +68,213 @@ from filetags.integrations import start_filebrowser
 # dict of big list of dicts: 'filename', 'path' and other metadata
 cache_of_files_with_metadata = {}
 
+# QUESTION: Change to pathlib?
+Files = list[str]
+# TODO: Make concrete.
+Tags = dict
+Vocabulary = dict
+TagsForShortcuts = list
+
+
+def handle_remove(files: Files, tags_for_vocabulary: Tags):
+    # vocabulary for completing tags is current tags of files
+    for currentfile in files:
+        # add tags so that list contains all unique tags:
+        for newtag in extract_tags_from_filename(currentfile):
+            add_tag_to_countdict(newtag, tags_for_vocabulary)
+    vocabulary = sorted(tags_for_vocabulary.keys())
+    upto9_tags_for_shortcuts = sorted(
+        get_upto_nine_keys_of_dict_with_highest_value(
+            tags_for_vocabulary, omit_filetags_donotsuggest_tags=True
+        )
+    )
+
+    return vocabulary, upto9_tags_for_shortcuts
+
+
+def handle_tag_filtering(tags_for_vocabulary: Tags):
+    # FIX: 2018-04-04: following 4-lines block re-occurs for options.tagtrees: unify accordingly!
+    chosen_tagtrees_dir = TAGFILTER_DIRECTORY
+    if options.tagtrees_directory:
+        chosen_tagtrees_dir = options.tagtrees_directory[0]
+        logging.debug(
+            "User overrides the default tagtrees directory to: "
+            + str(chosen_tagtrees_dir)
+        )
+
+    for tag in get_tags_from_files_and_subfolders(
+        startdir=os.getcwd(), options=options
+    ):
+        add_tag_to_countdict(tag, tags_for_vocabulary)
+
+    logging.debug("generating vocabulary ...")
+    vocabulary = sorted(tags_for_vocabulary.keys())
+    upto9_tags_for_shortcuts = sorted(
+        get_upto_nine_keys_of_dict_with_highest_value(
+            tags_for_vocabulary, omit_filetags_donotsuggest_tags=True
+        )
+    )
+
+    return vocabulary, upto9_tags_for_shortcuts
+
+
+def handle_tagging(files: Files, vocabulary: Vocabulary):
+    if not files:
+        return vocabulary, []
+
+    # If it is only one file which is a link to the same basename
+    # in a different directory, show the original directory:
+    if (
+        len(files) == 1
+        and TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS
+        and is_nonbroken_link(files[0])
+    ):
+        link_file = split_up_filename(files[0])
+        original_file = split_up_filename(
+            get_link_source_file(files[0])
+        )  # 0 = absolute path incl. filename; 1 = dir; 2 = filename
+        if link_file[1] != original_file[1] and link_file[2] == original_file[2]:
+            # basenames are same, dirs are different
+            print(
+                "     ... link: tagging also matching filename in " + original_file[1]
+            )
+    # do the same but for a list of link files whose paths have to match:
+    if (
+        len(files) > 1
+        and TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS
+        and all_files_are_links_to_same_directory(files)
+    ):
+        # using first file for determining directories:
+        link_file = split_up_filename(files[0])
+        original_file = split_up_filename(
+            get_link_source_file(files[0])
+        )  # 0 = absolute path incl. filename; 1 = dir; 2 = filename
+        print("     ... links: tagging also matching filenames in " + original_file[1])
+
+    # remove given (shared) tags from the vocabulary:
+    tags_intersection_of_files = get_common_tags_from_files(files)
+    tags_for_visual = tags_intersection_of_files
+    logging.debug(
+        "found common tags: tags_intersection_of_files[%s]"
+        % "], [".join(tags_intersection_of_files)
+    )
+
+    # append current filetags with a prepended '-' in order to allow tag completion for removing tags via '-tagname'
+    tags_from_filenames = set()
+    for currentfile in files:
+        tags_from_filenames = tags_from_filenames.union(
+            set(extract_tags_from_filename(currentfile))
+        )
+    negative_tags_from_filenames = set()
+    for currenttag in list(tags_from_filenames):
+        negative_tags_from_filenames.add("-" + currenttag)
+
+    vocabulary = list(
+        set(vocabulary).union(negative_tags_from_filenames)
+        - set(tags_intersection_of_files)
+    )
+
+    logging.debug("deriving upto9_tags_for_shortcuts ...")
+    logging.debug("files[0] = " + files[0])
+    logging.debug(
+        "startdir = " + os.path.dirname(os.path.abspath(os.path.basename(files[0])))
+    )
+    upto9_tags_for_shortcuts = sorted(
+        get_upto_nine_keys_of_dict_with_highest_value(
+            get_tags_from_files_and_subfolders(
+                startdir=os.path.dirname(os.path.abspath(os.path.basename(files[0]))),
+                options=options,
+            ),
+            tags_intersection_of_files,
+            omit_filetags_donotsuggest_tags=True,
+        )
+    )
+    logging.debug("derived upto9_tags_for_shortcuts")
+
+    return vocabulary, upto9_tags_for_shortcuts, tags_for_visual
+
+
+def handle_interactive_mode(files: Files, vocabulary: Vocabulary):
+    tags_for_visual = None
+
+    if len(options.files) < 1 and not options.tagfilter:
+        error_exit(5, "Please add at least one file name as argument")
+
+    tags_for_vocabulary = {}
+    upto9_tags_for_shortcuts = []
+
+    # look out for .filetags file and add readline support for tag completion if found with content
+    if options.remove:
+        vocabulary, upto9_tags_for_shortcuts = handle_remove(
+            files, tags_for_vocabulary=tags_for_vocabulary
+        )
+    elif options.tagfilter:
+        vocabulary, upto9_tags_for_shortcuts = handle_tag_filtering(
+            tags_for_vocabulary=tags_for_vocabulary
+        )
+    else:
+        vocabulary, upto9_tags_for_shortcuts, tags_for_visual = handle_tagging(
+            files, vocabulary=vocabulary
+        )
+
+    logging.debug(
+        "derived vocabulary with %i entries" % len(vocabulary)
+    )  # using default vocabulary which was generate above
+
+    # ==================== Interactive asking user for tags ============================= ##
+    tags_from_userinput = ask_for_tags(
+        vocabulary, upto9_tags_for_shortcuts, tags_for_visual, options=options
+    )
+    # ==================== Interactive asking user for tags ============================= ##
+    print("")  # new line after input for separating input from output
+
+    return tags_from_userinput
+
+
+def process_files(files: Files, filtertags, list_of_link_directories):
+    num_errors = 0
+    for filename in files:
+        if not os.path.exists(filename):
+            logging.error('File "' + filename + '" does not exist. Skipping this one …')
+            logging.debug("problematic filename: " + filename)
+            logging.debug("os.getcwd() = " + os.getcwd())
+            num_errors += 1
+
+        elif is_broken_link(filename):
+            # skip broken links completely and write error message:
+            logging.error(
+                'File "' + filename + '" is a broken link. Skipping this one …'
+            )
+            num_errors += 1
+
+        else:
+            # if filename is a link, tag the source file as well:
+            handle_file_and_optional_link(
+                filename,
+                filtertags,
+                options.remove,
+                options.tagfilter,
+                options.dryrun,
+            )
+            logging.debug("list_of_link_directories: " + repr(list_of_link_directories))
+
+            if len(list_of_link_directories) > 1:
+                logging.debug(
+                    "Seems like we've found links and renamed their source "
+                    + "as well. Print out the those directories as well:"
+                )
+                print(
+                    "      This link has a link source with a matching basename. I renamed it there as well:"
+                )
+                for directory in list_of_link_directories[:-1]:
+                    print("      · " + directory)
+            list_of_link_directories = []
+
+    if num_errors > 0:
+        error_exit(
+            20, str(num_errors) + " error(s) occurred. Please check messages above."
+        )
+
 
 def main():
     """Main function"""
@@ -78,101 +285,14 @@ def main():
 
     handle_logging(options)
 
-    if options.verbose and options.quiet:
-        error_exit(
-            1,
-            'Options "--verbose" and "--quiet" found. '
-            + "This does not make any sense, you silly fool :-)",
-        )
-
-    # interactive mode and tags are given
-    if options.interactive and options.tags:
-        error_exit(
-            3,
-            'I found option "--tag" and option "--interactive". \n'
-            + "Please choose either tag option OR interactive mode.",
-        )
-
-    if options.list_tags_by_number and options.list_tags_by_alphabet:
-        error_exit(6, "Please use only one list-by-option at once.")
-
-    if options.tag_gardening and (
-        options.list_tags_by_number
-        or options.list_tags_by_alphabet
-        or options.tags
-        or options.tagtrees
-        or options.tagfilter
-    ):
-        error_exit(
-            7, "Please don't use that gardening option together with any other option."
-        )
-
-    if options.tagfilter and (
-        options.list_tags_by_number
-        or options.list_tags_by_alphabet
-        or options.tags
-        or options.tag_gardening
-    ):
-        error_exit(
-            14, "Please don't use that filter option together with any other option."
-        )
-
-    if options.list_tags_by_number and (
-        options.tagfilter
-        or options.list_tags_by_alphabet
-        or options.tags
-        or options.tagtrees
-        or options.tag_gardening
-    ):
-        error_exit(
-            15, "Please don't use that list option together with any other option."
-        )
-
-    if options.list_tags_by_alphabet and (
-        options.tagfilter
-        or options.list_tags_by_number
-        or options.tags
-        or options.tagtrees
-        or options.tag_gardening
-    ):
-        error_exit(
-            16, "Please don't use that list option together with any other option."
-        )
-
-    if options.tags and (
-        options.tagfilter
-        or options.list_tags_by_number
-        or options.list_tags_by_alphabet
-        or options.tagtrees
-        or options.tag_gardening
-    ):
-        error_exit(
-            17, "Please don't use that tags option together with any other option."
-        )
-
-    if options.tagtrees and (
-        options.list_tags_by_number
-        or options.list_tags_by_alphabet
-        or options.tags
-        or options.tag_gardening
-    ):
-        error_exit(
-            18, "Please don't use the tagtrees option together with any other option."
-        )
-
-    if (options.list_tags_by_alphabet or options.list_tags_by_number) and (
-        options.tags or options.interactive or options.remove
-    ):
-        error_exit(
-            8, "Please don't use list any option together with add/remove tag options."
-        )
+    validate_options(options)
 
     logging.debug("extracting list of files ...")
     logging.debug("len(options.files) [%s]" % str(len(options.files)))
 
     files = extract_filenames_from_argument(options.files)
 
-    if platform.system() == "Windows" and len(files) == 1:
+    if IS_WINDOWS and len(files) == 1:
         # Windows CLI does not resolve wildcard globbing: https://github.com/novoid/filetags/issues/25
         # Therefore, filetags has to do the business proper(TM) operating systems usually
         # does: converting file globs to lists of files:
@@ -202,10 +322,10 @@ def main():
         + "   (80/80 is the fall-back)"
     )
     tags_from_userinput = []
-    if files:
-        vocabulary = sorted(locate_and_parse_controlled_vocabulary(files[0]))
-    else:
-        vocabulary = sorted(locate_and_parse_controlled_vocabulary(False))
+    # QUESTION: Why false?
+    vocabulary = sorted(
+        locate_and_parse_controlled_vocabulary(files and files[0] or False)
+    )
 
     if len(options.files) < 1 and not (
         options.tagtrees
@@ -223,7 +343,9 @@ def main():
         or options.list_unknown_tags
     ):
 
-        tag_dict = get_tags_from_files_and_subfolders(startdir=os.getcwd())
+        tag_dict = get_tags_from_files_and_subfolders(
+            startdir=os.getcwd(), options=options
+        )
         if not tag_dict:
             print("\nNo file containing tags found in this folder hierarchy.\n")
             return {}
@@ -254,6 +376,8 @@ def main():
             successful_exit()
 
     elif options.tag_gardening:
+        # REFACTOR: Move to decorator this debugs and wrap each handler with
+        # it.
         logging.debug("handling option for tag gardening")
         handle_tag_gardening(
             vocabulary,
@@ -263,144 +387,11 @@ def main():
         successful_exit()
 
     elif options.tagtrees and not options.tagfilter:
+        # STYLE: Rename to remove `option`.
         handle_option_tagtrees()
 
     elif options.interactive or not options.tags:
-
-        tags_for_visual = None
-
-        if len(options.files) < 1 and not options.tagfilter:
-            error_exit(5, "Please add at least one file name as argument")
-
-        tags_for_vocabulary = {}
-        upto9_tags_for_shortcuts = []
-
-        # look out for .filetags file and add readline support for tag completion if found with content
-        if options.remove:
-            # vocabulary for completing tags is current tags of files
-            for currentfile in files:
-                # add tags so that list contains all unique tags:
-                for newtag in extract_tags_from_filename(currentfile):
-                    add_tag_to_countdict(newtag, tags_for_vocabulary)
-            vocabulary = sorted(tags_for_vocabulary.keys())
-            upto9_tags_for_shortcuts = sorted(
-                get_upto_nine_keys_of_dict_with_highest_value(
-                    tags_for_vocabulary, omit_filetags_donotsuggest_tags=True
-                )
-            )
-
-        elif options.tagfilter:
-
-            # FIXXME 2018-04-04: following 4-lines block re-occurs for options.tagtrees: unify accordingly!
-            chosen_tagtrees_dir = TAGFILTER_DIRECTORY
-            if options.tagtrees_directory:
-                chosen_tagtrees_dir = options.tagtrees_directory[0]
-                logging.debug(
-                    "User overrides the default tagtrees directory to: "
-                    + str(chosen_tagtrees_dir)
-                )
-
-            for tag in get_tags_from_files_and_subfolders(startdir=os.getcwd()):
-                add_tag_to_countdict(tag, tags_for_vocabulary)
-
-            logging.debug("generating vocabulary ...")
-            vocabulary = sorted(tags_for_vocabulary.keys())
-            upto9_tags_for_shortcuts = sorted(
-                get_upto_nine_keys_of_dict_with_highest_value(
-                    tags_for_vocabulary, omit_filetags_donotsuggest_tags=True
-                )
-            )
-
-        else:
-            if files:
-
-                # if it is only one file which is a link to the same basename
-                # in a different directory, show the original directory:
-                if (
-                    len(files) == 1
-                    and TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS
-                    and is_nonbroken_link(files[0])
-                ):
-                    link_file = split_up_filename(files[0])
-                    original_file = split_up_filename(
-                        get_link_source_file(files[0])
-                    )  # 0 = absolute path incl. filename; 1 = dir; 2 = filename
-                    if (
-                        link_file[1] != original_file[1]
-                        and link_file[2] == original_file[2]
-                    ):
-                        # basenames are same, dirs are different
-                        print(
-                            "     ... link: tagging also matching filename in "
-                            + original_file[1]
-                        )
-                # do the same but for a list of link files whose paths have to match:
-                if (
-                    len(files) > 1
-                    and TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS
-                    and all_files_are_links_to_same_directory(files)
-                ):
-                    # using first file for determining directories:
-                    link_file = split_up_filename(files[0])
-                    original_file = split_up_filename(
-                        get_link_source_file(files[0])
-                    )  # 0 = absolute path incl. filename; 1 = dir; 2 = filename
-                    print(
-                        "     ... links: tagging also matching filenames in "
-                        + original_file[1]
-                    )
-
-                # remove given (shared) tags from the vocabulary:
-                tags_intersection_of_files = get_common_tags_from_files(files)
-                tags_for_visual = tags_intersection_of_files
-                logging.debug(
-                    "found common tags: tags_intersection_of_files[%s]"
-                    % "], [".join(tags_intersection_of_files)
-                )
-
-                # append current filetags with a prepended '-' in order to allow tag completion for removing tags via '-tagname'
-                tags_from_filenames = set()
-                for currentfile in files:
-                    tags_from_filenames = tags_from_filenames.union(
-                        set(extract_tags_from_filename(currentfile))
-                    )
-                negative_tags_from_filenames = set()
-                for currenttag in list(tags_from_filenames):
-                    negative_tags_from_filenames.add("-" + currenttag)
-
-                vocabulary = list(
-                    set(vocabulary).union(negative_tags_from_filenames)
-                    - set(tags_intersection_of_files)
-                )
-
-                logging.debug("deriving upto9_tags_for_shortcuts ...")
-                logging.debug("files[0] = " + files[0])
-                logging.debug(
-                    "startdir = "
-                    + os.path.dirname(os.path.abspath(os.path.basename(files[0])))
-                )
-                upto9_tags_for_shortcuts = sorted(
-                    get_upto_nine_keys_of_dict_with_highest_value(
-                        get_tags_from_files_and_subfolders(
-                            startdir=os.path.dirname(
-                                os.path.abspath(os.path.basename(files[0]))
-                            )
-                        ),
-                        tags_intersection_of_files,
-                        omit_filetags_donotsuggest_tags=True,
-                    )
-                )
-                logging.debug("derived upto9_tags_for_shortcuts")
-            logging.debug(
-                "derived vocabulary with %i entries" % len(vocabulary)
-            )  # using default vocabulary which was generate above
-
-        # ==================== Interactive asking user for tags ============================= ##
-        tags_from_userinput = ask_for_tags(
-            vocabulary, upto9_tags_for_shortcuts, tags_for_visual, options=options
-        )
-        # ==================== Interactive asking user for tags ============================= ##
-        print("")  # new line after input for separating input from output
+        tags_from_userinput = handle_interactive_mode(files, vocabulary=vocabulary)
 
     else:
         # non-interactive: extract list of tags
@@ -409,11 +400,12 @@ def main():
         tags_from_userinput = extract_tags_from_argument(options.tags[0])
 
         if not tags_from_userinput:
-            # FIXXME: check: can this be the case?
+            # QUESTION: can this even be the case?
             logging.info("no tags given, exiting.")
             sys.stdout.flush()
             sys.exit(0)
 
+    # TODO: Move logging to corresponding handler.
     logging.debug("tags found: [%s]" % "], [".join(tags_from_userinput))
     if options.remove:
         logging.info(
@@ -451,50 +443,11 @@ def main():
             max_file_length = len(filename)
     logging.debug("determined maximum file name length with %i" % max_file_length)
 
-    num_errors = 0
-    for filename in files:
-
-        if not os.path.exists(filename):
-            logging.error('File "' + filename + '" does not exist. Skipping this one …')
-            logging.debug("problematic filename: " + filename)
-            logging.debug("os.getcwd() = " + os.getcwd())
-            num_errors += 1
-
-        elif is_broken_link(filename):
-            # skip broken links completely and write error message:
-            logging.error(
-                'File "' + filename + '" is a broken link. Skipping this one …'
-            )
-            num_errors += 1
-
-        else:
-
-            # if filename is a link, tag the source file as well:
-            handle_file_and_optional_link(
-                filename,
-                tags_from_userinput,
-                options.remove,
-                options.tagfilter,
-                options.dryrun,
-            )
-            logging.debug("list_of_link_directories: " + repr(list_of_link_directories))
-
-            if len(list_of_link_directories) > 1:
-                logging.debug(
-                    "Seems like we've found links and renamed their source "
-                    + "as well. Print out the those directories as well:"
-                )
-                print(
-                    "      This link has a link source with a matching basename. I renamed it there as well:"
-                )
-                for directory in list_of_link_directories[:-1]:
-                    print("      · " + directory)
-            list_of_link_directories = []
-
-    if num_errors > 0:
-        error_exit(
-            20, str(num_errors) + " error(s) occurred. Please check messages above."
-        )
+    process_files(
+        files,
+        filtertags=tags_from_userinput,
+        list_of_link_directories=list_of_link_directories,
+    )
 
     if options.tagfilter and not options.quiet:
         logging.debug('Now openeing filebrowser for dir "' + chosen_tagtrees_dir + '"')
