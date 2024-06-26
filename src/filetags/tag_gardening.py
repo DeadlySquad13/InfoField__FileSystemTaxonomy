@@ -39,7 +39,7 @@ class TagGardening:
             cache_of_files_with_metadata=cache_of_files_with_metadata,
             options=options,
         )  # = cache_of_files_with_metadata of current dir
-        tag_dict = self.get_tags_from_files_and_subfolders(
+        tag_dict = self.current_service.get_tags_from_files_and_subfolders(
             startdir=os.getcwd(), options=options
         )
         if not tag_dict:

@@ -61,6 +61,9 @@ def handle_tagging(
     virtualTags: VirtualTagsProtocol,
     files: Filenames,
     vocabulary: Vocabulary,
+    # TODO: Change default param. Dict is not best default param for options: it throws error if we try to use options.something.
+    # And we can't use options.get("something") because `get` doesn't exist on
+    # CliOptions (Namespace class).
     options: CliOptions = {},
 ):
     if not files:
@@ -164,7 +167,7 @@ def handle_interactive_mode(
         )
     else:
         vocabulary, upto9_tags_for_shortcuts, tags_for_visual = handle_tagging(
-            virtualTags, files, vocabulary=vocabulary
+            virtualTags, files, vocabulary=vocabulary, options=options
         )
 
     logging.debug(

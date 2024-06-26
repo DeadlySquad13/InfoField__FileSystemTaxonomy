@@ -361,7 +361,7 @@ class TagLocalFilesystem:
 
                 # Enable recursive directory traversal for specific options:
                 if not (
-                    options.get("recursive")
+                    options.recursive
                     and (
                         options.list_tags_by_alphabet
                         or options.list_tags_by_number
