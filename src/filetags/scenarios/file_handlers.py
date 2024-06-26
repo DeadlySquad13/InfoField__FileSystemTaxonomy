@@ -9,15 +9,14 @@ from filetags.file_operations.find_unique_alternative_to_file import \
 from filetags.file_operations.links import (create_link, get_link_source_file,
                                             is_lnk_file, is_nonbroken_link,
                                             split_up_filename)
-from filetags.tags.services.TagLocalFilesystem import (
-    adding_tag_to_filename, extract_tags_from_filename,
-    removing_tag_from_filename)
+from filetags.tags.VirtualTags import VirtualTags
 from filetags.utils.data_structures import (item_contained_in_list_of_lists,
                                             print_item_transition)
 
 
 # REFACTOR: abstract tags and file_operations functionality.
 def handle_file_and_optional_link(
+    virtualTags: VirtualTags,
     orig_filename,
     tags,
     do_remove,
@@ -220,6 +219,7 @@ def handle_file_and_optional_link(
     )
 
     new_filename = handle_file(
+        virtualTags,
         filename,
         tags,
         do_remove,
@@ -242,6 +242,7 @@ def handle_file_and_optional_link(
 
 # REFACTOR: abstract tags functionality.
 def handle_file(
+    virtualTags,
     orig_filename,
     tags,
     do_remove,
@@ -308,14 +309,18 @@ def handle_file(
             if tagname.strip() == "":
                 continue
             if do_remove:
-                new_basename = removing_tag_from_filename(new_basename, tagname)
+                new_basename = virtualTags.current_service.removing_tag_from_filename(
+                    new_basename, tagname
+                )
                 logging.debug(
                     "handle_file: set new_basename ["
                     + new_basename
                     + "] when do_remove"
                 )
             elif tagname[0] == "-":
-                new_basename = removing_tag_from_filename(new_basename, tagname[1:])
+                new_basename = virtualTags.current_service.removing_tag_from_filename(
+                    new_basename, tagname[1:]
+                )
                 logging.debug(
                     "handle_file: set new_basename ["
                     + new_basename
@@ -324,11 +329,13 @@ def handle_file(
             else:
                 # FIXXME: not performance optimized for large number of unique tags in many lists:
                 tag_in_unique_tags, matching_unique_tag_list = (
-                    item_contained_in_list_of_lists(tagname, unique_tags)
+                    item_contained_in_list_of_lists(tagname, virtualTags.unique_tags)
                 )
 
                 if tagname != tag_in_unique_tags:
-                    new_basename = adding_tag_to_filename(new_basename, tagname)
+                    new_basename = virtualTags.current_service.adding_tag_to_filename(
+                        new_basename, tagname
+                    )
                     logging.debug(
                         "handle_file: set new_basename ["
                         + new_basename
@@ -340,7 +347,11 @@ def handle_file(
                     # If user enters contradicting tags, only the last one will be applied.
                     # FIXXME: this is an undocumented feature -> please add proper documentation
 
-                    current_filename_tags = extract_tags_from_filename(new_basename)
+                    current_filename_tags = (
+                        virtualTags.current_service.extract_tags_from_filename(
+                            new_basename
+                        )
+                    )
                     conflicting_tags = list(
                         set(current_filename_tags).intersection(
                             matching_unique_tag_list
@@ -351,15 +362,19 @@ def handle_file(
                         % (tagname, repr(conflicting_tags))
                     )
                     for conflicting_tag in conflicting_tags:
-                        new_basename = removing_tag_from_filename(
-                            new_basename, conflicting_tag
+                        new_basename = (
+                            virtualTags.current_service.removing_tag_from_filename(
+                                new_basename, conflicting_tag
+                            )
                         )
                         logging.debug(
                             "handle_file: set new_basename ["
                             + new_basename
                             + "] when conflicting_tag in conflicting_tags"
                         )
-                    new_basename = adding_tag_to_filename(new_basename, tagname)
+                    new_basename = virtualTags.current_service.adding_tag_to_filename(
+                        new_basename, tagname
+                    )
                     logging.debug(
                         "handle_file: set new_basename ["
                         + new_basename

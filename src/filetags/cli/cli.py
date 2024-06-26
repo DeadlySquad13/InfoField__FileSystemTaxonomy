@@ -6,11 +6,11 @@ import sys
 import colorama
 
 from filetags.cli.parser import CliOptions, extract_tags_from_argument
+from filetags.common.consts import UNIQUE_TAG_TESTSTRINGS
 from filetags.completion import SimpleCompleter
 from filetags.consts import BETWEEN_TAG_SEPARATOR, IS_WINDOWS
-from filetags.tags import (get_tag_visual,
-                           check_for_possible_shortcuts_in_entered_tags,
-                           print_tag_shortcut_with_numbers)
+from filetags.tags.VirtualTagsProtocol import VirtualTagsProtocol
+from filetags.tags.shortcuts import check_for_possible_shortcuts_in_entered_tags, print_tag_shortcut_with_numbers
 
 if IS_WINDOWS:
     try:
@@ -43,7 +43,6 @@ else:
 
 max_file_length = 0  # will be set after iterating over source files182
 
-UNIQUE_TAG_TESTSTRINGS = ["teststring1", "teststring2"]
 unique_tags = [
     UNIQUE_TAG_TESTSTRINGS
 ]  # list of list which contains tags that are mutually exclusive
@@ -53,6 +52,7 @@ unique_tags = [
 
 # # User dialog.
 def ask_for_tags(
+    virtualTags: VirtualTagsProtocol,
     vocabulary,
     upto9_tags_for_shortcuts,
     tags_for_visual=None,
@@ -95,7 +95,7 @@ def ask_for_tags(
         + colorama.Style.RESET_ALL
     )
     print("                     ")
-    print(get_tag_visual(tags_for_visual))
+    print(virtualTags.get_tag_visual(tags_for_visual))
     print("                     ")
 
     if len(upto9_tags_for_shortcuts) > 0:

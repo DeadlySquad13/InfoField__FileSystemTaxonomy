@@ -10,19 +10,19 @@ from filetags.consts import (TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS,
 from filetags.file_operations import (all_files_are_links_to_same_directory,
                                       get_link_source_file, is_nonbroken_link,
                                       split_up_filename)
-from filetags.scenarios.common import Files, Tags, Vocabulary
-from filetags.tags import (add_tag_to_countdict, extract_tags_from_filename,
-                           get_tags_from_files_and_subfolders)
-from filetags.Tagtree import get_common_tags_from_files
+from filetags.common.types import Filenames, TagnamesVocabulary, Vocabulary
+from filetags.tags.VirtualTagsProtocol import VirtualTagsProtocol
 from filetags.utils.logging import error_exit
 
 
-def handle_remove(files: Files, tags_for_vocabulary: Tags):
+def handle_remove(
+    virtualTags: VirtualTagsProtocol, files: Filenames, tags_for_vocabulary: TagnamesVocabulary
+):
     # vocabulary for completing tags is current tags of files
     for currentfile in files:
         # add tags so that list contains all unique tags:
-        for newtag in extract_tags_from_filename(currentfile):
-            add_tag_to_countdict(newtag, tags_for_vocabulary)
+        for newtag in virtualTags.current_servic.extract_tags_from_filename(currentfile):
+            virtualTags.add_tag_to_countdict(newtag, tags_for_vocabulary)
     vocabulary = sorted(tags_for_vocabulary.keys())
     upto9_tags_for_shortcuts = sorted(
         get_upto_nine_keys_of_dict_with_highest_value(
@@ -33,7 +33,9 @@ def handle_remove(files: Files, tags_for_vocabulary: Tags):
     return vocabulary, upto9_tags_for_shortcuts
 
 
-def handle_tag_filtering(tags_for_vocabulary: Tags, options: CliOptions = {}):
+def handle_tag_filtering(
+    virtualTags: VirtualTagsProtocol, tags_for_vocabulary: TagnamesVocabulary, options: CliOptions = {}
+):
     # FIX: 2018-04-04: following 4-lines block re-occurs for options.tagtrees: unify accordingly!
     chosen_tagtrees_dir = TAGFILTER_DIRECTORY
     if options.tagtrees_directory:
@@ -43,10 +45,10 @@ def handle_tag_filtering(tags_for_vocabulary: Tags, options: CliOptions = {}):
             + str(chosen_tagtrees_dir)
         )
 
-    for tag in get_tags_from_files_and_subfolders(
+    for tag in virtualTags.current_service.get_tags_from_files_and_subfolders(
         startdir=os.getcwd(), options=options
     ):
-        add_tag_to_countdict(tag, tags_for_vocabulary)
+        virtualTags.add_tag_to_countdict(tag, tags_for_vocabulary)
 
     logging.debug("generating vocabulary ...")
     vocabulary = sorted(tags_for_vocabulary.keys())
@@ -59,7 +61,7 @@ def handle_tag_filtering(tags_for_vocabulary: Tags, options: CliOptions = {}):
     return vocabulary, upto9_tags_for_shortcuts
 
 
-def handle_tagging(files: Files, vocabulary: Vocabulary, options: CliOptions = {}):
+def handle_tagging(virtualTags: VirtualTagsProtocol, files: Filenames, vocabulary: Vocabulary, options: CliOptions = {}):
     if not files:
         return vocabulary, []
 
@@ -93,7 +95,7 @@ def handle_tagging(files: Files, vocabulary: Vocabulary, options: CliOptions = {
         print("     ... links: tagging also matching filenames in " + original_file[1])
 
     # remove given (shared) tags from the vocabulary:
-    tags_intersection_of_files = get_common_tags_from_files(files)
+    tags_intersection_of_files = virtualTags.get_common_tags_from_files(files)
     tags_for_visual = tags_intersection_of_files
     logging.debug(
         "found common tags: tags_intersection_of_files[%s]"
@@ -105,7 +107,7 @@ def handle_tagging(files: Files, vocabulary: Vocabulary, options: CliOptions = {
     tags_from_filenames = set()
     for currentfile in files:
         tags_from_filenames = tags_from_filenames.union(
-            set(extract_tags_from_filename(currentfile))
+            set(virtualTags.current_service.extract_tags_from_filename(currentfile))
         )
     negative_tags_from_filenames = set()
     for currenttag in list(tags_from_filenames):
@@ -123,7 +125,7 @@ def handle_tagging(files: Files, vocabulary: Vocabulary, options: CliOptions = {
     )
     upto9_tags_for_shortcuts = sorted(
         get_upto_nine_keys_of_dict_with_highest_value(
-            get_tags_from_files_and_subfolders(
+            virtualTags.current_service.get_tags_from_files_and_subfolders(
                 startdir=os.path.dirname(os.path.abspath(os.path.basename(files[0]))),
                 options=options,
             ),
@@ -137,7 +139,10 @@ def handle_tagging(files: Files, vocabulary: Vocabulary, options: CliOptions = {
 
 
 def handle_interactive_mode(
-    files: Files, vocabulary: Vocabulary, options: CliOptions = {}
+    virtualTags: VirtualTagsProtocol,
+    files: Filenames,
+    vocabulary: Vocabulary,
+    options: CliOptions = {},
 ):
     tags_for_visual = None
 
@@ -150,15 +155,15 @@ def handle_interactive_mode(
     # look out for .filetags file and add readline support for tag completion if found with content
     if options.remove:
         vocabulary, upto9_tags_for_shortcuts = handle_remove(
-            files, tags_for_vocabulary=tags_for_vocabulary
+            virtualTags, files, tags_for_vocabulary=tags_for_vocabulary
         )
     elif options.tagfilter:
         vocabulary, upto9_tags_for_shortcuts = handle_tag_filtering(
-            tags_for_vocabulary=tags_for_vocabulary
+            virtualTags, tags_for_vocabulary=tags_for_vocabulary
         )
     else:
         vocabulary, upto9_tags_for_shortcuts, tags_for_visual = handle_tagging(
-            files, vocabulary=vocabulary
+            virtualTags, files, vocabulary=vocabulary
         )
 
     logging.debug(
@@ -167,7 +172,11 @@ def handle_interactive_mode(
 
     # ==================== Interactive asking user for tags ============================= ##
     tags_from_userinput = ask_for_tags(
-        vocabulary, upto9_tags_for_shortcuts, tags_for_visual, options=options
+        virtualTags,
+        vocabulary,
+        upto9_tags_for_shortcuts,
+        tags_for_visual,
+        options=options,
     )
     # ==================== Interactive asking user for tags ============================= ##
     print("")  # new line after input for separating input from output

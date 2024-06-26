@@ -3,6 +3,8 @@ import logging
 import colorama  # for colorful output
 
 
+# QUESTION: Make part of Repr? Part of Shortcuts class? Maybe even part of Shortcuts
+# + Repr = ShortcutsRepr class?
 def print_tag_shortcut_with_numbers(
     tag_list, tags_get_added=True, tags_get_linked=False
 ):

@@ -1,92 +1,99 @@
-import difflib  # for good enough matching words
+from dataclasses import dataclass, field
+from typing import Literal
 
-from filetags.cli.preprocessing import locate_and_parse_controlled_vocabulary
-from filetags.tags.services.TagLocalFilesystem import extract_tags_from_filename
+from filetags.common.types import Filenames, Tagnames, TagnamesVocabulary
+from filetags.tag_gardening import TagGardening
+from filetags.tags.repr import TagRepr
+from filetags.tags.services import TagLocalFilesystem, TagService
+from filetags.Tagtree import Tagtree
+from filetags.Vocabulary import Vocabulary
 
-
-def get_unique_tags_from_filename(filename):
-    """
-    Extracts tags that occur in the array of arrays "unique_tags".
-
-    @param filename: string containing one file name
-    @param return: list of found tags
-    """
-
-    filetags = extract_tags_from_filename(filename)
-    result = []
-    for tag in filetags:
-        for taggroup in unique_tags:
-            if tag in taggroup:
-                result.append(tag)
-    return result
+# TOOO: Automate it. Names in services?
+TagServiceName = Literal["local_filesystem"]
 
 
-def find_similar_tags(tag, tags):
-    """
-    Returns a list of entries of tags that are similar to tag (but not same as tag)
+@dataclass
+class VirtualTags(TagRepr, Tagtree, Vocabulary, TagGardening):
+    _current_service_name: TagServiceName
+    unique_tags: Tagnames = field(default_factory=list)
+    services: dict[TagServiceName, TagService] = field(default_factory=dict)
+    # QUESTION: We need to work with one service simultaneously? Or with all at
+    # once?
 
-    @param tag: a (unicode) string that represents a tag
-    @param tags: a list of (unicode) strings
-    @param return: list of tags that are similar to tag
-    """
+    def __init__(self):
+        self.unique_tags = []
+        self.services = {}
+        self.services["local_filesystem"] = TagLocalFilesystem()
 
-    assert tag.__class__ == str
-    assert tags.__class__ == list
+        self._current_service_name = "local_filesystem"
 
-    similar_tags = difflib.get_close_matches(tag, tags, n=999, cutoff=0.7)
-    close_but_not_exact_matches = []
+    @property
+    def current_service(self):
+        return self.services[self._current_service_name]
 
-    # omit exact matches
-    # FIX: This can be done in one eloquent line -> refactor.
-    for match in similar_tags:
-        if match != tag:
-            close_but_not_exact_matches.append(match)
+    def get_unique_tags_from_filename(self, filename):
+        """
+        Extracts tags that occur in the array of arrays "unique_tags".
 
-    return close_but_not_exact_matches
+        @param filename: string containing one file name
+        @param return: list of found tags
+        """
 
+        filetags = self.current_service.extract_tags_from_filename(filename)
+        result = []
+        for tag in filetags:
+            for taggroup in self.unique_tags:
+                if tag in taggroup:
+                    result.append(tag)
+        return result
 
-def list_unknown_tags(file_tag_dict):
-    """
-    Traverses the file system, extracts all tags, prints tags that are found
-    in file names which are not found in the controlled vocabulary file .filetags
+    def list_unknown_tags(self, file_tag_dict):
+        """
+        Traverses the file system, extracts all tags, prints tags that are found
+        in file names which are not found in the controlled vocabulary file .filetags
 
-    @param return: dict of tags (if max_tag_count is set, returned entries are set accordingly)
-    """
+        @param return: dict of tags (if max_tag_count is set, returned entries are set accordingly)
+        """
 
-    # REFACTOR: False as a param?
-    vocabulary = locate_and_parse_controlled_vocabulary(False)
+        # REFACTOR: False as a param?
+        vocabulary = self.locate_and_parse_controlled_vocabulary(False)
 
-    # filter out known tags from tag_dict
-    unknown_tag_dict = {
-        key: value
-        for key, value in list(file_tag_dict.items())
-        if key not in vocabulary
-    }
+        # filter out known tags from tag_dict
+        unknown_tag_dict = {
+            key: value
+            for key, value in list(file_tag_dict.items())
+            if key not in vocabulary
+        }
 
-    if unknown_tag_dict:
-        print_tag_dict(unknown_tag_dict, vocabulary)
-    else:
-        print(
-            "\n  "
-            + str(len(file_tag_dict))
-            + " different tags were found in file names which are all"
-            + " part of your .filetags vocabulary (consisting of "
-            + str(len(vocabulary))
-            + " tags).\n"
-        )
+        if unknown_tag_dict:
+            self.print_tag_dict(unknown_tag_dict, vocabulary)
+        else:
+            print(
+                "\n  "
+                + str(len(file_tag_dict))
+                + " different tags were found in file names which are all"
+                + " part of your .filetags vocabulary (consisting of "
+                + str(len(vocabulary))
+                + " tags).\n"
+            )
 
-    return unknown_tag_dict
+        return unknown_tag_dict
 
+    def filter_files_matching_tags(
+        self, files: Filenames, tags: TagnamesVocabulary
+    ) -> Filenames:
+        """
+        Returns a list of file names that contain all given tags.
 
-def filter_files_matching_tags(allfiles, tags):
-    """
-    Returns a list of file names that contain all given tags.
+        @param allfiles: array of file names
+        @param tags: array of tags
+        @param return: list of file names that contain all tags
+        """
 
-    @param allfiles: array of file names
-    @param tags: array of tags
-    @param return: list of file names that contain all tags
-    """
-
-    return [
-        x for x in allfiles if set(extract_tags_from_filename(x)).issuperset(set(tags))
-    ]
+        return [
+            x
+            for x in files
+            if set(self.current_service.extract_tags_from_filename(x)).issuperset(
+                set(tags)
+            )
+        ]

@@ -2,7 +2,8 @@ import argparse
 import sys
 
 from filetags.cli.help_parts import DESCRIPTION, EPILOG
-from filetags.consts import DEFAULT_IMAGE_VIEWER_LINUX, DEFAULT_TAGTREES_MAXDEPTH, TAGFILTER_DIRECTORY
+from filetags.consts import (DEFAULT_IMAGE_VIEWER_LINUX,
+                             DEFAULT_TAGTREES_MAXDEPTH, TAGFILTER_DIRECTORY)
 
 CliOptions = argparse.Namespace
 

@@ -1,15 +1,21 @@
 import logging
 import os
 
-from filetags.cli.parser.options import CliOptions
+from filetags.cli.parser import CliOptions
 from filetags.file_operations.links import is_broken_link
-from filetags.scenarios.common import Files
+from filetags.common.types import Filenames
 from filetags.scenarios.file_handlers import handle_file_and_optional_link
+from filetags.tags.VirtualTagsProtocol import VirtualTagsProtocol
 from filetags.utils.logging import error_exit
 
 
 def process_files(
-    files: Files, filtertags, list_of_link_directories, max_file_length: int, options: CliOptions = {}
+    virtualTags: VirtualTagsProtocol,
+    files: Filenames,
+    filtertags,
+    list_of_link_directories,
+    max_file_length: int,
+    options: CliOptions = {},
 ):
     num_errors = 0
     for filename in files:
@@ -29,6 +35,7 @@ def process_files(
         else:
             # if filename is a link, tag the source file as well:
             handle_file_and_optional_link(
+                virtualTags,
                 filename,
                 filtertags,
                 options.remove,

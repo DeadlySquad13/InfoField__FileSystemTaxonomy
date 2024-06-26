@@ -6,18 +6,13 @@ import sys
 from filetags.cli import TTY_HEIGHT, TTY_WIDTH
 from filetags.cli.parser import (extract_filenames_from_argument,
                                  extract_tags_from_argument, validate_options)
-from filetags.cli.preprocessing import locate_and_parse_controlled_vocabulary
 from filetags.consts import (BETWEEN_TAG_SEPARATOR, IS_WINDOWS,
                              PROG_VERSION_DATE)
 from filetags.file_operations import (assert_empty_tagfilter_directory,
                                       get_files_of_directory)
-from filetags.scenarios import process_files
+from filetags.scenarios import process_files,  handle_tagtrees_generation
 from filetags.scenarios.interactive import handle_interactive_mode
-from filetags.tag_gardening import handle_tag_gardening
-from filetags.tags import (filter_files_matching_tags,
-                           get_tags_from_files_and_subfolders,
-                           list_unknown_tags, print_tag_dict)
-from filetags.Tagtree import handle_option_tagtrees
+from filetags.tags import VirtualTags
 from filetags.utils.logging import error_exit, handle_logging
 from filetags.utils.successful_exit import successful_exit
 
@@ -94,7 +89,9 @@ def main():
         logging.debug("WINDOWS: len(files) [%s]" % str(len(files)))
         logging.debug("WINDOWS: files CONVERTED [%s]" % str(files))
 
+    # TODO: Remove global.
     global list_of_link_directories
+    # TODO: Remove global.
     global chosen_tagtrees_dir
 
     logging.debug("%s filenames found: [%s]" % (str(len(files)), "], [".join(files)))
@@ -106,9 +103,12 @@ def main():
         + "   (80/80 is the fall-back)"
     )
     tags_from_userinput = []
+    virtualTags = VirtualTags()
     # QUESTION: Why false?
+    # QUESTION: Better don't create a new variable to leave vocabulary in
+    # virtualTags updated?
     vocabulary = sorted(
-        locate_and_parse_controlled_vocabulary(files and files[0] or False)
+        virtualTags.locate_and_parse_controlled_vocabulary(files and files[0] or False)
     )
 
     if len(options.files) < 1 and not (
@@ -127,7 +127,7 @@ def main():
         or options.list_unknown_tags
     ):
 
-        tag_dict = get_tags_from_files_and_subfolders(
+        tag_dict = virtualTags.current_service.get_tags_from_files_and_subfolders(
             startdir=os.getcwd(), options=options
         )
         if not tag_dict:
@@ -136,7 +136,7 @@ def main():
 
         if options.list_tags_by_alphabet:
             logging.debug("handling option list_tags_by_alphabet")
-            print_tag_dict(
+            virtualTags.print_tag_dict(
                 tag_dict,
                 vocabulary=vocabulary,
                 sort_index=0,
@@ -146,7 +146,7 @@ def main():
 
         elif options.list_tags_by_number:
             logging.debug("handling option list_tags_by_number")
-            print_tag_dict(
+            virtualTags.print_tag_dict(
                 tag_dict,
                 vocabulary=vocabulary,
                 sort_index=1,
@@ -156,14 +156,14 @@ def main():
 
         elif options.list_unknown_tags:
             logging.debug("handling option list_unknown_tags")
-            list_unknown_tags(tag_dict)
+            virtualTags.list_unknown_tags(tag_dict)
             successful_exit()
 
     elif options.tag_gardening:
         # REFACTOR: Move to decorator this debugs and wrap each handler with
         # it.
         logging.debug("handling option for tag gardening")
-        handle_tag_gardening(
+        virtualTags.handle_tag_gardening(
             vocabulary,
             cache_of_files_with_metadata=cache_of_files_with_metadata,
             options=options,
@@ -171,11 +171,12 @@ def main():
         successful_exit()
 
     elif options.tagtrees and not options.tagfilter:
-        # STYLE: Rename to remove `option`.
-        handle_option_tagtrees()
+        handle_tagtrees_generation(virtualTags, options=options)
 
     elif options.interactive or not options.tags:
-        tags_from_userinput = handle_interactive_mode(files, vocabulary=vocabulary, options=options)
+        tags_from_userinput = handle_interactive_mode(
+            virtualTags, files, vocabulary=vocabulary, options=options
+        )
 
     else:
         # non-interactive: extract list of tags
@@ -212,12 +213,12 @@ def main():
 
     if options.tagfilter and not files and not options.tagtrees:
         assert_empty_tagfilter_directory(chosen_tagtrees_dir, options)
-        files = filter_files_matching_tags(
+        files = virtualTags.filter_files_matching_tags(
             get_files_of_directory(os.getcwd(), options), tags_from_userinput
         )
     elif options.tagfilter and not files and options.tagtrees:
         # the combination of tagtrees and tagfilter requires user input of tags which was done above
-        handle_option_tagtrees(tags_from_userinput)
+        handle_tagtrees_generation(virtualTags, tags_from_userinput, options=options)
 
     logging.debug("iterate over files ...")
 
@@ -229,6 +230,7 @@ def main():
     logging.debug("determined maximum file name length with %i" % max_file_length)
 
     process_files(
+        virtualTags,
         files,
         filtertags=tags_from_userinput,
         list_of_link_directories=list_of_link_directories,
