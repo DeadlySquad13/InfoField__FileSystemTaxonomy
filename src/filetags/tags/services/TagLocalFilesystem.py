@@ -270,7 +270,10 @@ cache_of_tags_by_folder = {}
 # REFACTOR: Remove use_cache.
 # FIX: Pass cache in usages as much as possible.
 def get_tags_from_files_and_subfolders(
-    startdir=os.getcwd(), use_cache=True, cache_of_files_with_metadata={}, options: CliOptions=None
+    startdir=os.getcwd(),
+    use_cache=True,
+    cache_of_files_with_metadata={},
+    options: CliOptions = {},
 ):
     """
     Traverses the file system starting with given directory,
@@ -334,7 +337,7 @@ def get_tags_from_files_and_subfolders(
 
             # Enable recursive directory traversal for specific options:
             if not (
-                options.recursive
+                options.get('recursive')
                 and (
                     options.list_tags_by_alphabet
                     or options.list_tags_by_number

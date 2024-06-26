@@ -56,7 +56,7 @@ def ask_for_tags(
     vocabulary,
     upto9_tags_for_shortcuts,
     tags_for_visual=None,
-    options: CliOptions = None,
+    options: CliOptions = {},
 ):
     """
     Takes a vocabulary and optional up to nine tags for shortcuts and interactively asks

@@ -99,7 +99,7 @@ def locate_file_in_cwd_and_parent_directories(startfile, filename):
 
 
 # REFACTOR: Narrow down the options.
-def get_files_of_directory(directory, options: CliOptions):
+def get_files_of_directory(directory, options: CliOptions = {}):
     """
     Lists the files of the given directory and returns a list of its files.
 
@@ -136,7 +136,7 @@ def get_files_of_directory(directory, options: CliOptions):
 
 # REFACTOR: Narrow down the options.
 # STYLE: Change naming to abstract from tagfilter directory.
-def assert_empty_tagfilter_directory(directory, options: CliOptions):
+def assert_empty_tagfilter_directory(directory, options: CliOptions = {}):
     """
     Creates non-existent tagfilter directory or deletes and re-creates it.
 

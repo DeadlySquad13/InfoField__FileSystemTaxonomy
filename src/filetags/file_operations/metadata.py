@@ -27,7 +27,7 @@ def get_files_with_metadata(
     startdir=os.getcwd(),
     use_cache=True,
     cache_of_files_with_metadata={},
-    options: CliOptions = None,
+    options: CliOptions = {},
 ):
     """
     Traverses the file system starting with given directory,

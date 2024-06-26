@@ -7,7 +7,7 @@ from filetags.tags import (find_similar_tags,
                            print_tag_set)
 
 
-def handle_tag_gardening(vocabulary, cache_of_files_with_metadata={}, options: CliOptions = None):
+def handle_tag_gardening(vocabulary, cache_of_files_with_metadata={}, options: CliOptions = {}):
     """
     This method is quite handy to find tags that might contain typos or do not
     differ much from other tags. You might want to rename them accordinly.

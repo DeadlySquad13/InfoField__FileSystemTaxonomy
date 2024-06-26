@@ -4,11 +4,27 @@ import os
 
 from filetags.cli.parser import CliOptions
 from filetags.consts import TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS
+from filetags.file_operations.find_unique_alternative_to_file import \
+    find_unique_alternative_to_file
+from filetags.file_operations.links import (create_link, get_link_source_file,
+                                            is_lnk_file, is_nonbroken_link,
+                                            split_up_filename)
+from filetags.tags.services.TagLocalFilesystem import (
+    adding_tag_to_filename, extract_tags_from_filename,
+    removing_tag_from_filename)
+from filetags.utils.data_structures import (item_contained_in_list_of_lists,
+                                            print_item_transition)
 
 
-# REFACTOR: abstract tags functionality.
+# REFACTOR: abstract tags and file_operations functionality.
 def handle_file_and_optional_link(
-    orig_filename, tags, do_remove, do_filter, dryrun, options: CliOptions
+    orig_filename,
+    tags,
+    do_remove,
+    do_filter,
+    dryrun,
+    max_file_length,
+    options: CliOptions = {},
 ):
     """
     @param orig_filename: string containing one file name
@@ -203,7 +219,15 @@ def handle_file_and_optional_link(
         + filename
     )
 
-    new_filename = handle_file(filename, tags, do_remove, do_filter, dryrun, options)
+    new_filename = handle_file(
+        filename,
+        tags,
+        do_remove,
+        do_filter,
+        dryrun,
+        max_file_length=max_file_length,
+        options=options,
+    )
 
     logging.debug(
         "handle_file_and_optional_link: switching back to original directory = "
@@ -217,7 +241,15 @@ def handle_file_and_optional_link(
 
 
 # REFACTOR: abstract tags functionality.
-def handle_file(orig_filename, tags, do_remove, do_filter, dryrun, options: CliOptions):
+def handle_file(
+    orig_filename,
+    tags,
+    do_remove,
+    do_filter,
+    dryrun,
+    max_file_length,
+    options: CliOptions = {},
+):
     """
     @param orig_filename: string containing one file name with absolute path
     @param tags: list containing one or more tags
@@ -252,7 +284,13 @@ def handle_file(orig_filename, tags, do_remove, do_filter, dryrun, options: CliO
     )
 
     if do_filter:
-        print_item_transition(dirname, basename, chosen_tagtrees_dir, transition="link", max_file_length=max_file_length)
+        print_item_transition(
+            dirname,
+            basename,
+            chosen_tagtrees_dir,
+            transition="link",
+            max_file_length=max_file_length,
+        )
         if not dryrun:
             create_link(
                 filename, os.path.join(chosen_tagtrees_dir, basename), options=options
@@ -346,8 +384,11 @@ def handle_file(orig_filename, tags, do_remove, do_filter, dryrun, options: CliO
             # REFACTOR: Change options to a function parameter.
             elif not options.quiet:
                 print_item_transition(
-                    dirname, basename, new_basename, transition=transition,
-                    max_file_length=max_file_length
+                    dirname,
+                    basename,
+                    new_basename,
+                    transition=transition,
+                    max_file_length=max_file_length,
                 )
 
             if not dryrun:

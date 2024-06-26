@@ -5,6 +5,7 @@ import os
 
 from filetags.cli.parser import CliOptions
 from filetags.consts import IS_WINDOWS
+from filetags.utils.logging import error_exit
 
 
 # REFACTOR: Move out of it. Maybe change to pathlib and remove entirely.
@@ -184,7 +185,7 @@ def is_lnk_file(filename):
     return filename.upper().endswith(".LNK")
 
 
-def create_link(source, destination, options: CliOptions):
+def create_link(source, destination, options: CliOptions = {}):
     """On non-Windows systems, a symbolic link is created that links
     source (existing file) to destination (the new symlink). On
     Windows systems a lnk-file is created instead.

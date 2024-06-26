@@ -2,7 +2,7 @@ from filetags.cli.parser.options import CliOptions
 from filetags.utils.logging import error_exit
 
 
-def validate_options(options: CliOptions):
+def validate_options(options: CliOptions = {}):
     if options.verbose and options.quiet:
         error_exit(
             1,
