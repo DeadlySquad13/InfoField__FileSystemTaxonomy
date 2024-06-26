@@ -5,23 +5,26 @@ from filetags.cli import ask_for_tags
 from filetags.cli.parser.options import CliOptions
 from filetags.cli.preprocessing import \
     get_upto_nine_keys_of_dict_with_highest_value
-from filetags.consts import (TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS,
-                             TAGFILTER_DIRECTORY)
+from filetags.common.types import Filenames, TagnamesVocabulary, Vocabulary
+from filetags.consts import TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS
 from filetags.file_operations import (all_files_are_links_to_same_directory,
                                       get_link_source_file, is_nonbroken_link,
                                       split_up_filename)
-from filetags.common.types import Filenames, TagnamesVocabulary, Vocabulary
 from filetags.tags.VirtualTagsProtocol import VirtualTagsProtocol
 from filetags.utils.logging import error_exit
 
 
 def handle_remove(
-    virtualTags: VirtualTagsProtocol, files: Filenames, tags_for_vocabulary: TagnamesVocabulary
+    virtualTags: VirtualTagsProtocol,
+    files: Filenames,
+    tags_for_vocabulary: TagnamesVocabulary,
 ):
     # vocabulary for completing tags is current tags of files
     for currentfile in files:
         # add tags so that list contains all unique tags:
-        for newtag in virtualTags.current_servic.extract_tags_from_filename(currentfile):
+        for newtag in virtualTags.current_servic.extract_tags_from_filename(
+            currentfile
+        ):
             virtualTags.add_tag_to_countdict(newtag, tags_for_vocabulary)
     vocabulary = sorted(tags_for_vocabulary.keys())
     upto9_tags_for_shortcuts = sorted(
@@ -34,17 +37,10 @@ def handle_remove(
 
 
 def handle_tag_filtering(
-    virtualTags: VirtualTagsProtocol, tags_for_vocabulary: TagnamesVocabulary, options: CliOptions = {}
+    virtualTags: VirtualTagsProtocol,
+    tags_for_vocabulary: TagnamesVocabulary,
+    options: CliOptions = {},
 ):
-    # FIX: 2018-04-04: following 4-lines block re-occurs for options.tagtrees: unify accordingly!
-    chosen_tagtrees_dir = TAGFILTER_DIRECTORY
-    if options.tagtrees_directory:
-        chosen_tagtrees_dir = options.tagtrees_directory[0]
-        logging.debug(
-            "User overrides the default tagtrees directory to: "
-            + str(chosen_tagtrees_dir)
-        )
-
     for tag in virtualTags.current_service.get_tags_from_files_and_subfolders(
         startdir=os.getcwd(), options=options
     ):
@@ -61,7 +57,12 @@ def handle_tag_filtering(
     return vocabulary, upto9_tags_for_shortcuts
 
 
-def handle_tagging(virtualTags: VirtualTagsProtocol, files: Filenames, vocabulary: Vocabulary, options: CliOptions = {}):
+def handle_tagging(
+    virtualTags: VirtualTagsProtocol,
+    files: Filenames,
+    vocabulary: Vocabulary,
+    options: CliOptions = {},
+):
     if not files:
         return vocabulary, []
 

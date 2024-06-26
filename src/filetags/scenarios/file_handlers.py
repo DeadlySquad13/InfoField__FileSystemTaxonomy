@@ -3,6 +3,7 @@ import logging
 import os
 
 from filetags.cli.parser import CliOptions
+from filetags.common.types import Path, Paths
 from filetags.consts import TAG_LINK_ORIGINALS_WHEN_TAGGING_LINKS
 from filetags.file_operations.find_unique_alternative_to_file import \
     find_unique_alternative_to_file
@@ -23,6 +24,8 @@ def handle_file_and_optional_link(
     do_filter,
     dryrun,
     max_file_length,
+    chosen_tagtrees_dir: Path,
+    list_of_link_directories: Paths,
     options: CliOptions = {},
 ):
     """
@@ -48,7 +51,6 @@ def handle_file_and_optional_link(
         return num_errors, False
 
     filename, dirname, basename, basename_without_lnk = split_up_filename(orig_filename)
-    global list_of_link_directories
 
     if not (os.path.isfile(filename) or os.path.islink(filename)):
         logging.debug(
@@ -124,7 +126,14 @@ def handle_file_and_optional_link(
                 + "v" * 20
             )
             additional_errors, new_source_basename = handle_file_and_optional_link(
-                old_source_filename, tags, do_remove, do_filter, dryrun
+                old_source_filename,
+                tags,
+                do_remove,
+                do_filter,
+                dryrun,
+                chosen_tagtrees_dir=chosen_tagtrees_dir,
+                list_of_link_directories=list_of_link_directories,
+                options=options,
             )
             num_errors += additional_errors
             logging.debug(
@@ -226,6 +235,8 @@ def handle_file_and_optional_link(
         do_filter,
         dryrun,
         max_file_length=max_file_length,
+        chosen_tagtrees_dir=chosen_tagtrees_dir,
+        list_of_link_directories=list_of_link_directories,
         options=options,
     )
 
@@ -249,6 +260,8 @@ def handle_file(
     do_filter,
     dryrun,
     max_file_length,
+    chosen_tagtrees_dir: Path,
+    list_of_link_directories: Paths,
     options: CliOptions = {},
 ):
     """
@@ -267,8 +280,6 @@ def handle_file(
         assert do_filter.__class__ == bool
     if dryrun:
         assert dryrun.__class__ == bool
-
-    global chosen_tagtrees_dir
 
     filename, dirname, basename, basename_without_lnk = split_up_filename(
         orig_filename, exception_on_file_not_found=True
@@ -343,7 +354,8 @@ def handle_file(
                     )
                 else:
                     # if tag within unique_tags found, and new unique tag is given, remove old tag:
-                    # e.g.: unique_tags = (u'yes', u'no') -> if 'no' should be added, remove existing tag 'yes' (and vice versa)
+                    # e.g.: unique_tags = (u'yes', u'no') -> if 'no' should be added, remove existing
+                    #   tag 'yes' (and vice versa)
                     # If user enters contradicting tags, only the last one will be applied.
                     # FIXXME: this is an undocumented feature -> please add proper documentation
 
@@ -389,7 +401,6 @@ def handle_file(
             transition = "add"
 
         if basename != new_basename:
-
             list_of_link_directories.append(dirname)
 
             if len(list_of_link_directories) > 1:

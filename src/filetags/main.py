@@ -6,11 +6,12 @@ import sys
 from filetags.cli import TTY_HEIGHT, TTY_WIDTH
 from filetags.cli.parser import (extract_filenames_from_argument,
                                  extract_tags_from_argument, validate_options)
+from filetags.cli.parser.processing import get_chosen_tagtrees_dir
 from filetags.consts import (BETWEEN_TAG_SEPARATOR, IS_WINDOWS,
                              PROG_VERSION_DATE)
 from filetags.file_operations import (assert_empty_tagfilter_directory,
                                       get_files_of_directory)
-from filetags.scenarios import process_files,  handle_tagtrees_generation
+from filetags.scenarios import handle_tagtrees_generation, process_files
 from filetags.scenarios.interactive import handle_interactive_mode
 from filetags.tags import VirtualTags
 from filetags.utils.logging import error_exit, handle_logging
@@ -41,8 +42,6 @@ from filetags.utils.successful_exit import successful_exit
 # - use "open" to open first(?) file
 
 controlled_vocabulary_filename = ""
-list_of_link_directories = []
-chosen_tagtrees_dir = False  # holds the definitive choice for a destination folder for filtering or tagtrees
 
 from filetags.cli.parser import get_cli_options
 
@@ -89,10 +88,7 @@ def main():
         logging.debug("WINDOWS: len(files) [%s]" % str(len(files)))
         logging.debug("WINDOWS: files CONVERTED [%s]" % str(files))
 
-    # TODO: Remove global.
-    global list_of_link_directories
-    # TODO: Remove global.
-    global chosen_tagtrees_dir
+    chosen_tagtrees_dir = get_chosen_tagtrees_dir(options=options)
 
     logging.debug("%s filenames found: [%s]" % (str(len(files)), "], [".join(files)))
     logging.debug(
@@ -171,7 +167,9 @@ def main():
         successful_exit()
 
     elif options.tagtrees and not options.tagfilter:
-        handle_tagtrees_generation(virtualTags, options=options)
+        handle_tagtrees_generation(
+            virtualTags, chosen_tagtrees_dir=chosen_tagtrees_dir, options=options
+        )
 
     elif options.interactive or not options.tags:
         tags_from_userinput = handle_interactive_mode(
@@ -202,7 +200,7 @@ def main():
             'filtering items with tag(s) "%s" and linking to directory "%s" ...'
             % (
                 str(BETWEEN_TAG_SEPARATOR.join(tags_from_userinput)),
-                str(chosen_tagtrees_dir),
+                chosen_tagtrees_dir,
             )
         )
     elif options.interactive:
@@ -233,8 +231,8 @@ def main():
         virtualTags,
         files,
         filtertags=tags_from_userinput,
-        list_of_link_directories=list_of_link_directories,
         max_file_length=max_file_length,
+        chosen_tagtrees_dir=chosen_tagtrees_dir,
         options=options,
     )
 

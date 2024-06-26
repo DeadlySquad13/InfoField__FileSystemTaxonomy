@@ -2,14 +2,18 @@ import logging
 import time
 
 from filetags.cli.parser.options import CliOptions
-from filetags.consts import DEFAULT_TAGTREES_MAXDEPTH, TAGFILTER_DIRECTORY
+from filetags.common.types import Path
+from filetags.consts import DEFAULT_TAGTREES_MAXDEPTH
 from filetags.integrations import start_filebrowser
 from filetags.tags.VirtualTagsProtocol import VirtualTagsProtocol
 from filetags.utils.successful_exit import successful_exit
 
 
 def handle_tagtrees_generation(
-    virtualTags: VirtualTagsProtocol, filtertags=None, options: CliOptions = {}
+    virtualTags: VirtualTagsProtocol,
+    chosen_tagtrees_dir: Path,
+    filtertags=None,
+    options: CliOptions = {},
 ):
     """
     Handles the options and preprocessing for generating tagtrees.
@@ -55,15 +59,6 @@ def handle_tagtrees_generation(
                 "When linking more than a few files, this "
                 + "might take a long time using many filesystem inodes."
             )
-
-    # FIX: 2018-04-04: following 4-lines block re-occurs for options.tagfilter: unify accordingly!
-    chosen_tagtrees_dir = TAGFILTER_DIRECTORY
-    if options.tagtrees_directory:
-        chosen_tagtrees_dir = options.tagtrees_directory[0]
-        logging.debug(
-            "User overrides the default tagtrees directory to: "
-            + str(chosen_tagtrees_dir)
-        )
 
     start = time.time()
     virtualTags.generate_tagtrees(
