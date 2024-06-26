@@ -3,6 +3,11 @@ ifneq (,$(wildcard ./.env.dev))
     export
 endif
 
+# Unfortunately, I haven't found a way to install *editable* package globally.
+install-globally:
+	# Force to reinstall it even if it exists.
+	pipx install --editable . --force
+
 build-image:
 	docker build . -t ${IMAGE_NAME}
 

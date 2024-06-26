@@ -20,10 +20,12 @@ python = ">=3.12"
 pyreadline3 = "*"
 colorama = "*"
 clint = "*"
+twine = "*"
+build = "*"
 
 [feature.test]
 tasks = { test = "pytest" }
-pypi-dependencies = { MlOps_course__Tasks = { path = "./", editable = true }, pytest = "==6.2.5", pytest-cov = "==2.12.1" }
+pypi-dependencies = { InfoField__FileSystemTaxonomy = { path = "./", editable = true }, pytest = "==6.2.5", pytest-cov = "==2.12.1" }
 
 [feature.lint.tasks]
 lint-check = "flake8 src"
@@ -45,7 +47,7 @@ isort = "==5.13.2"
 
 [feature.pre-commit]
 tasks = { pre-commit-check = "pre-commit run --all-files" }
-pypi-dependencies = { MlOps_course__Tasks = { path = "./", editable = true }, pre-commit = "==3.7.0" }
+pypi-dependencies = { InfoField__FileSystemTaxonomy = { path = "./", editable = true }, pre-commit = "==3.7.0" }
 
 # [feature.quarto.tasks]
 # preview-docs = "quarto preview docs"
